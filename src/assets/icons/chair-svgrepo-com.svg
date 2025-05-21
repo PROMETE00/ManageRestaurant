@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg width="800px" height="800px" viewBox="0 -12 64 64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+    
+    <title>Chair</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+</defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+        <g id="Chair" sketch:type="MSLayerGroup" transform="translate(1.000000, 0.000000)" stroke="#6B6C6E" stroke-width="2">
+            <path d="M61,22.9 L1,22.9 C-0.1,22.9 1.14877725e-14,23.8 1.14877725e-14,25 L1.14877725e-14,25.3 C1.14877725e-14,26.5 -0.1,29 1,29 L5,29 L5,37.9 C5,39.1 5.9,39 7,39 C8.1,39 9.1,39.1 9.1,37.9 L9.1,29 L52,29 L52,37.9 C52,39.1 52.9,39 54.1,39 C55.2,39 56,39.1 56,37.9 L56,29 L61,29 C62.1,29 62,26.5 62,25.3 L62,25 C62,23.8 62.1,22.9 61,22.9 L61,22.9 Z" id="Shape" sketch:type="MSShapeGroup">
+</path>
+            <path d="M7,16 L7,22.9" id="Shape" sketch:type="MSShapeGroup">
+</path>
+            <path d="M55,16 L55,22.9" id="Shape" sketch:type="MSShapeGroup">
+</path>
+            <path d="M7,0 L7,3.5" id="Shape" sketch:type="MSShapeGroup">
+</path>
+            <path d="M55,0 L55,3.5" id="Shape" sketch:type="MSShapeGroup">
+</path>
+            <path d="M7,8 L7,11.8" id="Shape" sketch:type="MSShapeGroup">
+</path>
+            <path d="M55,8 L55,11.8" id="Shape" sketch:type="MSShapeGroup">
+</path>
+            <path d="M59.9,5.9 C59.9,7.1 59,8 57.8,8 L4.1,8 C3,8 2,7.1 2,5.9 L2,5.9 C2,4.7 2.9,3.8 4.1,4 L57.8,4 C59,3.8 59.9,4.7 59.9,5.9 L59.9,5.9 L59.9,5.9 Z" id="Shape" sketch:type="MSShapeGroup">
+</path>
+            <path d="M59.9,13.9 C59.9,15.1 59,16 57.8,16 L4.1,16 C3,16 2,15.1 2,13.9 L2,13.9 C2,12.7 2.9,11.8 4.1,12 L57.8,12 C59,11.8 59.9,12.7 59.9,13.9 L59.9,13.9 L59.9,13.9 Z" id="Shape" sketch:type="MSShapeGroup">
+</path>
+        </g>
+    </g>
+</svg>
