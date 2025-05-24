@@ -44,7 +44,7 @@ export default function DashboardRestaurante() {
                 <span className="text-xs text-gray-400">{reserva.zona}</span>
               </div>
               <div className="text-sm text-gray-300">
-                {reserva.hora} - {reserva.pax} pax • Mesa {reserva.mesa}
+                {reserva.hora} - {reserva.pax} pmax • Mesa {reserva.mesa}
               </div>
             </div>
           ))}
@@ -55,7 +55,13 @@ export default function DashboardRestaurante() {
       <main className="flex-1 p-6 relative">
         <header className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-semibold">Plano del Restaurante</h2>
-          <Button className="bg-yellow-400 text-black font-semibold">NUEVA RESERVA</Button>
+          <Button
+              onClick={() => router.push('/reservas/nueva')}
+              className="bg-yellow-400 text-black font-semibold"
+              >
+  NUEVA RESERVA
+</Button>
+
         </header>
 
         <div
