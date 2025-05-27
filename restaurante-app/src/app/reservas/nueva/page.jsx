@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import axios from 'axios'
 
 export default function NuevaReserva() {
   const router = useRouter()
 
-  // Estado del formulario
   const [form, setForm] = useState({
     nombre: '',
     hora: '',
@@ -16,17 +16,45 @@ export default function NuevaReserva() {
     zona: 'Comedor',
   })
 
+  const [mesas, setMesas] = useState([])
+
+  // 🔄 Cargar mesas al iniciar
+  useEffect(() => {
+    axios.get('http://localhost:8080/api/mesas')
+      .then(res => setMesas(res.data))
+      .catch(err => console.error('Error al cargar mesas:', err))
+  }, [])
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    // 🔜 Aquí conectarás con tu backend Spring:
-    // await fetch('http://localhost:8080/api/reservas', { ... })
-    console.log('Reserva lista para enviar:', form)
-    // Vuelve al dashboard cuando se guarde
-    router.push('/pagina')
+
+    try {
+      // 1️⃣ Crear cliente (temporal)
+      const clienteRes = await axios.post('http://localhost:8080/api/clientes', {
+        nombre: form.nombre,
+        telefono: '000-000-0000'
+      })
+      const clienteId = clienteRes.data.id
+
+      // 2️⃣ Crear reserva
+      await axios.post('http://localhost:8080/api/reservas', {
+        fecha: new Date().toISOString().split('T')[0], // hoy
+        hora: form.hora,
+        cantidad: parseInt(form.pax),
+        cliente: { id: clienteId },
+        mesa: { id: parseInt(form.mesa) }
+      })
+
+      alert('✅ Reserva creada correctamente')
+      router.push('/pagina')
+    } catch (err) {
+      console.error('❌ Error al crear reserva:', err)
+      alert('Error al crear reserva')
+    }
   }
 
   return (
@@ -44,7 +72,7 @@ export default function NuevaReserva() {
               value={form.nombre}
               onChange={handleChange}
               required
-              className="w-full rounded-md bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full rounded-md bg-gray-800 px-3 py-2"
             />
           </div>
 
@@ -57,7 +85,7 @@ export default function NuevaReserva() {
               value={form.hora}
               onChange={handleChange}
               required
-              className="w-full rounded-md bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full rounded-md bg-gray-800 px-3 py-2"
             />
           </div>
 
@@ -71,32 +99,37 @@ export default function NuevaReserva() {
               value={form.pax}
               onChange={handleChange}
               required
-              className="w-full rounded-md bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full rounded-md bg-gray-800 px-3 py-2"
             />
           </div>
 
           {/* Mesa */}
           <div>
             <label className="block mb-1 text-sm font-medium">Mesa</label>
-            <input
-              type="number"
+            <select
               name="mesa"
-              min="1"
               value={form.mesa}
               onChange={handleChange}
               required
-              className="w-full rounded-md bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            />
+              className="w-full rounded-md bg-gray-800 px-3 py-2"
+            >
+              <option value="">Selecciona una mesa</option>
+              {mesas.map(m => (
+                <option key={m.id} value={m.id}>
+                  Mesa {m.id} - {m.ubicacion} ({m.capacidad} pax)
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Zona */}
+          {/* Zona (solo visual) */}
           <div>
-            <label className="block mb-1 text-sm font-medium">Zona</label>
+            <label className="block mb-1 text-sm font-medium">Zona (solo decorativo)</label>
             <select
               name="zona"
               value={form.zona}
               onChange={handleChange}
-              className="w-full rounded-md bg-gray-800 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full rounded-md bg-gray-800 px-3 py-2"
             >
               <option>Comedor</option>
               <option>Terraza</option>

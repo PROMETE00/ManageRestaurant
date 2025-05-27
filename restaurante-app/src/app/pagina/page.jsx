@@ -1,15 +1,30 @@
 'use client'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import axios from 'axios'
 import { Button } from '@/components/ui/button'
+
 
 export default function DashboardRestaurante() {
   const router = useRouter()
 
-  const reservas = [
-    { hora: '13:30h', pax: 5, mesa: 3, zona: 'Comedor', nombre: 'Luis' },
-    { hora: '15:00h', pax: 4, mesa: 5, zona: 'Comedor', nombre: 'Ana' },
-    { hora: '15:00h', pax: 2, mesa: 3, zona: 'Terraza', nombre: 'Carlos' },
-  ]
+  const [reservas, setReservas] = useState([])
+
+  useEffect(() => {
+    axios.get("http://localhost:8080/api/reservas")
+      .then((res) => {
+        const data = res.data.map(r => ({
+          hora: r.hora?.slice(0, 5) + 'h',
+          pax: r.cantidad,
+          mesa: r.mesa?.id,
+          zona: r.mesa?.ubicacion ?? 'Desconocida',
+          nombre: r.cliente?.nombre ?? 'Sin nombre'
+        }))
+        setReservas(data)
+      })
+      .catch(err => console.error("Error al obtener reservas:", err))
+  }, [])
+
 
   const mesasActivas = reservas.map((r) => r.mesa)
 
@@ -61,6 +76,10 @@ export default function DashboardRestaurante() {
               >
   NUEVA RESERVA
 </Button>
+<Button onClick={() => router.push('/meseros/nuevo')} className="bg-green-500">
+  Registrar Mesero
+</Button>
+
 
         </header>
 
