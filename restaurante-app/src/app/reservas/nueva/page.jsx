@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import axios from 'axios'
+import { format } from 'date-fns'
 
 export default function NuevaReserva() {
   const router = useRouter()
 
   const [form, setForm] = useState({
     nombre: '',
+    fecha: format(new Date(), 'yyyy-MM-dd'),
     hora: '',
     pax: 1,
     mesa: '',
@@ -18,7 +20,6 @@ export default function NuevaReserva() {
 
   const [mesas, setMesas] = useState([])
 
-  // 🔄 Cargar mesas al iniciar
   useEffect(() => {
     axios.get('http://localhost:8080/api/mesas')
       .then(res => setMesas(res.data))
@@ -33,16 +34,15 @@ export default function NuevaReserva() {
     e.preventDefault()
 
     try {
-      // 1️⃣ Crear cliente (temporal)
       const clienteRes = await axios.post('http://localhost:8080/api/clientes', {
         nombre: form.nombre,
         telefono: '000-000-0000'
       })
+
       const clienteId = clienteRes.data.id
 
-      // 2️⃣ Crear reserva
       await axios.post('http://localhost:8080/api/reservas', {
-        fecha: new Date().toISOString().split('T')[0], // hoy
+        fecha: form.fecha,
         hora: form.hora,
         cantidad: parseInt(form.pax),
         cliente: { id: clienteId },
@@ -58,40 +58,53 @@ export default function NuevaReserva() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#1f2a37] p-4">
-      <div className="w-full max-w-md bg-[#2b3748] rounded-xl shadow-xl p-8 text-white">
-        <h1 className="text-2xl font-bold text-center mb-6">Nueva reserva</h1>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#1f2a37] to-[#111827] p-4">
+      <div className="w-full max-w-xl bg-[#2b3748] rounded-2xl shadow-2xl p-10 text-white space-y-6">
+        <h1 className="text-3xl font-bold text-center">Nueva Reserva</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-5">
           {/* Nombre */}
           <div>
-            <label className="block mb-1 text-sm font-medium">Nombre cliente</label>
+            <label className="block text-sm font-semibold mb-1">Nombre del Cliente</label>
             <input
               type="text"
               name="nombre"
               value={form.nombre}
               onChange={handleChange}
               required
-              className="w-full rounded-md bg-gray-800 px-3 py-2"
+              className="w-full bg-gray-800 px-4 py-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            />
+          </div>
+
+          {/* Fecha */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">Fecha de Reserva</label>
+            <input
+              type="date"
+              name="fecha"
+              value={form.fecha}
+              onChange={handleChange}
+              required
+              className="w-full bg-gray-800 px-4 py-2 rounded-md text-white"
             />
           </div>
 
           {/* Hora */}
           <div>
-            <label className="block mb-1 text-sm font-medium">Hora</label>
+            <label className="block text-sm font-semibold mb-1">Hora</label>
             <input
               type="time"
               name="hora"
               value={form.hora}
               onChange={handleChange}
               required
-              className="w-full rounded-md bg-gray-800 px-3 py-2"
+              className="w-full bg-gray-800 px-4 py-2 rounded-md text-white"
             />
           </div>
 
-          {/* Personas */}
+          {/* Número de Personas */}
           <div>
-            <label className="block mb-1 text-sm font-medium">Número de personas</label>
+            <label className="block text-sm font-semibold mb-1">Número de Personas</label>
             <input
               type="number"
               name="pax"
@@ -99,22 +112,22 @@ export default function NuevaReserva() {
               value={form.pax}
               onChange={handleChange}
               required
-              className="w-full rounded-md bg-gray-800 px-3 py-2"
+              className="w-full bg-gray-800 px-4 py-2 rounded-md text-white"
             />
           </div>
 
           {/* Mesa */}
           <div>
-            <label className="block mb-1 text-sm font-medium">Mesa</label>
+            <label className="block text-sm font-semibold mb-1">Mesa</label>
             <select
               name="mesa"
               value={form.mesa}
               onChange={handleChange}
               required
-              className="w-full rounded-md bg-gray-800 px-3 py-2"
+              className="w-full bg-gray-800 px-4 py-2 rounded-md text-white"
             >
               <option value="">Selecciona una mesa</option>
-              {mesas.map(m => (
+              {mesas.map((m) => (
                 <option key={m.id} value={m.id}>
                   Mesa {m.id} - {m.ubicacion} ({m.capacidad} pax)
                 </option>
@@ -122,14 +135,14 @@ export default function NuevaReserva() {
             </select>
           </div>
 
-          {/* Zona (solo visual) */}
+          {/* Zona decorativa */}
           <div>
-            <label className="block mb-1 text-sm font-medium">Zona (solo decorativo)</label>
+            <label className="block text-sm font-semibold mb-1">Zona (Decorativo)</label>
             <select
               name="zona"
               value={form.zona}
               onChange={handleChange}
-              className="w-full rounded-md bg-gray-800 px-3 py-2"
+              className="w-full bg-gray-800 px-4 py-2 rounded-md text-white"
             >
               <option>Comedor</option>
               <option>Terraza</option>
@@ -138,20 +151,19 @@ export default function NuevaReserva() {
           </div>
 
           {/* Botones */}
-          <div className="flex justify-between pt-4">
+          <div className="flex justify-between mt-6">
             <Button
               type="button"
               onClick={() => router.back()}
-              className="bg-gray-500 hover:bg-gray-600"
+              className="bg-gray-600 hover:bg-gray-700"
             >
               Cancelar
             </Button>
-
             <Button
               type="submit"
-              className="bg-yellow-500 hover:bg-yellow-600"
+              className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
             >
-              Guardar
+              Guardar Reserva
             </Button>
           </div>
         </form>

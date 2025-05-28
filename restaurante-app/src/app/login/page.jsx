@@ -12,18 +12,23 @@ export default function Login() {
   const router = useRouter()
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    try {
-      const response = await axios.post("https://example.com/api/Login", {
-        email,
-        password,
-      })
-      alert("Login successful")
-      router.push("/pagina")
-    } catch (error) {
-      alert("Login failed")
-    }
+  e.preventDefault();
+  try {
+    const response = await axios.post("http://localhost:8080/api/usuarios/login", {
+      email,
+      password,
+    });
+
+    const usuario = response.data;
+    localStorage.setItem("usuario", JSON.stringify(usuario));
+
+    router.push("/pagina");
+  } catch (error) {
+    console.error(error);
+    alert("Email o contraseña incorrectos");
   }
+  };
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-black relative">
