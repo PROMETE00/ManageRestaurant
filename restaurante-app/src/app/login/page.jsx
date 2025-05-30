@@ -22,7 +22,7 @@ export default function Login() {
     const usuario = response.data;
     localStorage.setItem("usuario", JSON.stringify(usuario));
 
-    router.push("/pagina");
+    router.push("/dashboard");
   } catch (error) {
     console.error(error);
     alert("Email o contraseña incorrectos");
