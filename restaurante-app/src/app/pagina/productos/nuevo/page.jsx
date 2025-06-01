@@ -1,40 +1,40 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import axios from 'axios'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import axios from 'axios';
 
 export default function NuevoProducto() {
-  const router = useRouter()
+  const router = useRouter();
 
   const [producto, setProducto] = useState({
     nombre: '',
     tipo: 'comida',
-    precio: ''
-  })
+    precio: '',
+  });
 
-  const handleChange = (e) => {
-    setProducto({ ...producto, [e.target.name]: e.target.value })
-  }
+  const handleChange = e => {
+    setProducto({ ...producto, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async e => {
+    e.preventDefault();
 
     try {
       await axios.post('http://localhost:8080/api/productos', {
         nombre: producto.nombre,
         tipo: producto.tipo,
-        precio: parseFloat(producto.precio)
-      })
+        precio: parseFloat(producto.precio),
+      });
 
-      alert('✅ Producto creado correctamente')
-      router.push('/pagina')
+      alert('✅ Producto creado correctamente');
+      router.push('/pagina');
     } catch (err) {
-      console.error('❌ Error al crear producto:', err)
-      alert('Error al crear producto')
+      console.error('❌ Error al crear producto:', err);
+      alert('Error al crear producto');
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#1f2a37] p-4">
@@ -96,15 +96,12 @@ export default function NuevoProducto() {
               Cancelar
             </Button>
 
-            <Button
-              type="submit"
-              className="bg-yellow-500 hover:bg-yellow-600"
-            >
+            <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600">
               Guardar
             </Button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

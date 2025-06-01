@@ -1,23 +1,23 @@
-'use client'
-import { useEffect, useState } from 'react'
-import axios from 'axios'
-import Sidebar from '@/components/SidebarNavegacion'
+'use client';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import Sidebar from '@/components/SidebarNavegacion';
 
 export default function Platillos() {
-  const [productos, setProductos] = useState([])
-  const [categoriaActiva, setCategoriaActiva] = useState('All')
+  const [productos, setProductos] = useState([]);
+  const [categoriaActiva, setCategoriaActiva] = useState('All');
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/productos')
+    axios
+      .get('http://localhost:8080/api/productos')
       .then(res => setProductos(res.data))
-      .catch(err => console.error('Error al cargar productos:', err))
-  }, [])
+      .catch(err => console.error('Error al cargar productos:', err));
+  }, []);
 
-  const categorias = ['All', ...new Set(productos.map(p => p.categoria))]
+  const categorias = ['All', ...new Set(productos.map(p => p.categoria))];
 
-  const productosFiltrados = categoriaActiva === 'All'
-    ? productos
-    : productos.filter(p => p.categoria === categoriaActiva)
+  const productosFiltrados =
+    categoriaActiva === 'All' ? productos : productos.filter(p => p.categoria === categoriaActiva);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex relative">
@@ -31,7 +31,9 @@ export default function Platillos() {
               key={i}
               onClick={() => setCategoriaActiva(cat)}
               className={`px-5 py-2 font-semibold rounded-full ${
-                categoriaActiva === cat ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-green-500'
+                categoriaActiva === cat
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-green-500'
               } transition`}
             >
               {cat}
@@ -57,5 +59,5 @@ export default function Platillos() {
         </div>
       </div>
     </div>
-  )
+  );
 }

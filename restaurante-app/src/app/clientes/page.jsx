@@ -1,34 +1,35 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { Pencil, Trash2, UserPlus } from 'lucide-react'
-import axios from 'axios'
-import SidebarNavegacion from '@/components/SidebarNavegacion'
+import { useEffect, useState } from 'react';
+import { Pencil, Trash2, UserPlus } from 'lucide-react';
+import axios from 'axios';
+import SidebarNavegacion from '@/components/SidebarNavegacion';
 
 export default function Clientes() {
-  const [clientes, setClientes] = useState([])
-  const [search, setSearch] = useState('')
+  const [clientes, setClientes] = useState([]);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/clientes')
-      .then((res) => setClientes(res.data))
-      .catch((err) => console.error('Error al cargar clientes:', err))
-  }, [])
+    axios
+      .get('http://localhost:8080/api/clientes')
+      .then(res => setClientes(res.data))
+      .catch(err => console.error('Error al cargar clientes:', err));
+  }, []);
 
-  const handleDelete = async (id) => {
-    const confirm = window.confirm('¿Seguro que deseas eliminar este cliente?')
-    if (!confirm) return
+  const handleDelete = async id => {
+    const confirm = window.confirm('¿Seguro que deseas eliminar este cliente?');
+    if (!confirm) return;
     try {
-      await axios.delete(`http://localhost:8080/api/clientes/${id}`)
-      setClientes(clientes.filter(c => c.id !== id))
+      await axios.delete(`http://localhost:8080/api/clientes/${id}`);
+      setClientes(clientes.filter(c => c.id !== id));
     } catch (err) {
-      alert('❌ No se pudo eliminar.')
+      alert('❌ No se pudo eliminar.');
     }
-  }
+  };
 
   const filteredClientes = clientes.filter(c =>
     c.nombre.toLowerCase().includes(search.toLowerCase())
-  )
+  );
 
   return (
     <div className="min-h-screen bg-gray-900 text-white relative">
@@ -48,7 +49,7 @@ export default function Clientes() {
             placeholder="Buscar por nombre..."
             className="bg-gray-800 text-white px-4 py-2 rounded border border-gray-600 focus:outline-none"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
           />
         </div>
 
@@ -63,7 +64,7 @@ export default function Clientes() {
               </tr>
             </thead>
             <tbody>
-              {filteredClientes.map((cliente) => (
+              {filteredClientes.map(cliente => (
                 <tr key={cliente.id} className="hover:bg-gray-700">
                   <td className="py-2 px-4">{cliente.id}</td>
                   <td className="py-2 px-4">{cliente.nombre}</td>
@@ -93,5 +94,5 @@ export default function Clientes() {
         </div>
       </main>
     </div>
-  )
+  );
 }

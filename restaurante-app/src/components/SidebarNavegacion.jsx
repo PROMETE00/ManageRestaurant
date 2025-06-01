@@ -1,18 +1,18 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
-import { Home, Users, UtensilsCrossed, ShoppingCart } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation';
+import { Home, Users, UtensilsCrossed, ShoppingCart } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const navItems = [
   { label: 'Dashboard', icon: <Home size={20} />, path: '/dashboard' },
   { label: 'Clientes', icon: <Users size={20} />, path: '/clientes' },
   { label: 'Platillos', icon: <UtensilsCrossed size={20} />, path: '/platillos' },
   { label: 'Pedidos', icon: <ShoppingCart size={20} />, path: '/pedidos' },
-]
+];
 
 export default function SidebarNavegacion() {
-  const router = useRouter()
+  const router = useRouter();
 
   return (
     <div className="group fixed left-0 top-1/2 -translate-y-1/2 z-50">
@@ -37,5 +37,5 @@ export default function SidebarNavegacion() {
         </div>
       </motion.aside>
     </div>
-  )
+  );
 }

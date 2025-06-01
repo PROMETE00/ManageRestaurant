@@ -1,38 +1,38 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import axios from 'axios'
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import axios from 'axios';
 
 export default function ListaProductos() {
-  const router = useRouter()
-  const [productos, setProductos] = useState([])
+  const router = useRouter();
+  const [productos, setProductos] = useState([]);
 
   const obtenerProductos = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/productos')
-      setProductos(response.data)
+      const response = await axios.get('http://localhost:8080/api/productos');
+      setProductos(response.data);
     } catch (error) {
-      console.error('Error al obtener productos:', error)
+      console.error('Error al obtener productos:', error);
     }
-  }
+  };
 
-  const eliminarProducto = async (id) => {
-    if (!confirm('¿Seguro que deseas eliminar este producto?')) return
+  const eliminarProducto = async id => {
+    if (!confirm('¿Seguro que deseas eliminar este producto?')) return;
 
     try {
-      await axios.delete(`http://localhost:8080/api/productos/${id}`)
-      alert('Producto eliminado')
-      obtenerProductos()
+      await axios.delete(`http://localhost:8080/api/productos/${id}`);
+      alert('Producto eliminado');
+      obtenerProductos();
     } catch (error) {
-      alert('Error al eliminar producto')
+      alert('Error al eliminar producto');
     }
-  }
+  };
 
   useEffect(() => {
-    obtenerProductos()
-  }, [])
+    obtenerProductos();
+  }, []);
 
   return (
     <div className="p-10 bg-[#1f2a37] min-h-screen text-white">
@@ -56,7 +56,7 @@ export default function ListaProductos() {
           </tr>
         </thead>
         <tbody>
-          {productos.map((producto) => (
+          {productos.map(producto => (
             <tr key={producto.id} className="border-b border-gray-700">
               <td className="px-4 py-2">{producto.nombre}</td>
               <td className="px-4 py-2 capitalize">{producto.tipo}</td>
@@ -87,5 +87,5 @@ export default function ListaProductos() {
         </tbody>
       </table>
     </div>
-  )
+  );
 }

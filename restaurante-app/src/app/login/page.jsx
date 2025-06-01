@@ -1,34 +1,33 @@
-'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { Button } from '@/components/ui/button'
-import axios from 'axios'
-import Link from 'next/link'
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import axios from 'axios';
+import Link from 'next/link';
 
 export default function Login() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const router = useRouter()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const router = useRouter();
 
-  const handleLogin = async (e) => {
-  e.preventDefault();
-  try {
-    const response = await axios.post("http://localhost:8080/api/usuarios/login", {
-      email,
-      password,
-    });
+  const handleLogin = async e => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:8080/api/usuarios/login', {
+        email,
+        password,
+      });
 
-    const usuario = response.data;
-    localStorage.setItem("usuario", JSON.stringify(usuario));
+      const usuario = response.data;
+      localStorage.setItem('usuario', JSON.stringify(usuario));
 
-    router.push("/dashboard");
-  } catch (error) {
-    console.error(error);
-    alert("Email o contraseña incorrectos");
-  }
+      router.push('/dashboard');
+    } catch (error) {
+      console.error(error);
+      alert('Email o contraseña incorrectos');
+    }
   };
-
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-black relative">
@@ -40,7 +39,10 @@ export default function Login() {
       />
 
       {/* Contenedor principal */}
-      <div className="relative z-10 flex flex-row rounded-xl shadow-2xl overflow-hidden" style={{ height: '600px' }}>
+      <div
+        className="relative z-10 flex flex-row rounded-xl shadow-2xl overflow-hidden"
+        style={{ height: '600px' }}
+      >
         {/* Imagen lateral */}
         <div className="h-full w-[500px]">
           <Image
@@ -65,7 +67,7 @@ export default function Login() {
                 name="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 required
                 autoComplete="email"
                 className="block w-full rounded-md bg-gray-800 px-3 py-2 text-base text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-600"
@@ -81,7 +83,7 @@ export default function Login() {
                 name="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
                 className="block w-full rounded-md bg-gray-800 px-3 py-2 text-base text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-600"
@@ -105,5 +107,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-  )
+  );
 }

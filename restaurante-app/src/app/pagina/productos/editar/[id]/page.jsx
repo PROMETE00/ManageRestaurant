@@ -1,47 +1,47 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
-import axios from 'axios'
-import { Button } from '@/components/ui/button'
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import axios from 'axios';
+import { Button } from '@/components/ui/button';
 
 export default function EditarProducto() {
-  const router = useRouter()
-  const params = useParams()
-  const { id } = params
+  const router = useRouter();
+  const params = useParams();
+  const { id } = params;
 
   const [form, setForm] = useState({
     nombre: '',
     tipo: '',
     precio: '',
-  })
+  });
 
   useEffect(() => {
     const fetchProducto = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/productos/${id}`)
-        setForm(response.data)
+        const response = await axios.get(`http://localhost:8080/api/productos/${id}`);
+        setForm(response.data);
       } catch (error) {
-        alert('Error al obtener el producto')
+        alert('Error al obtener el producto');
       }
-    }
-    if (id) fetchProducto()
-  }, [id])
+    };
+    if (id) fetchProducto();
+  }, [id]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+  const handleChange = e => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async e => {
+    e.preventDefault();
     try {
-      await axios.put(`http://localhost:8080/api/productos/${id}`, form)
-      alert('Producto actualizado correctamente')
-      router.push('/pagina/productos')
+      await axios.put(`http://localhost:8080/api/productos/${id}`, form);
+      alert('Producto actualizado correctamente');
+      router.push('/pagina/productos');
     } catch (error) {
-      alert('Error al actualizar el producto')
+      alert('Error al actualizar el producto');
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#1f2a37] p-4 text-white">
@@ -106,5 +106,5 @@ export default function EditarProducto() {
         </form>
       </div>
     </div>
-  )
+  );
 }

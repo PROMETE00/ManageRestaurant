@@ -1,14 +1,15 @@
-"use client";
-import { useEffect, useState } from "react";
-import axios from "axios";
+'use client';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 export default function Productos() {
   const [productos, setProductos] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:8080/api/productos")
-      .then((res) => setProductos(res.data))
-      .catch((err) => console.error("Error al obtener productos:", err));
+    axios
+      .get('http://localhost:8080/api/productos')
+      .then(res => setProductos(res.data))
+      .catch(err => console.error('Error al obtener productos:', err));
   }, []);
 
   return (

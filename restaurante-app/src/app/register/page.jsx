@@ -13,7 +13,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [rol, setRol] = useState('empleado'); // valor por defecto
 
-  const handleRegister = async (e) => {
+  const handleRegister = async e => {
     e.preventDefault();
 
     if (!nombre || !email || !password || !confirmPassword || !rol) {
@@ -51,11 +51,13 @@ export default function Register() {
         className="object-cover opacity-70"
       />
 
-      <div className="relative z-10 flex flex-row rounded-xl shadow-2xl overflow-hidden" style={{ height: '750px' }}>
+      <div
+        className="relative z-10 flex flex-row rounded-xl shadow-2xl overflow-hidden"
+        style={{ height: '750px' }}
+      >
         <div className="w-[400px] bg-[#1a1e2a] text-white flex flex-col justify-center px-12">
           <h2 className="text-4xl font-bold mb-8 text-center">Registro</h2>
           <form onSubmit={handleRegister} className="space-y-6">
-
             <div>
               <label htmlFor="nombre" className="block text-sm font-medium text-gray-300">
                 Nombre
@@ -65,7 +67,7 @@ export default function Register() {
                 name="nombre"
                 type="text"
                 value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
+                onChange={e => setNombre(e.target.value)}
                 required
                 className="block w-full rounded-md bg-gray-800 px-3 py-2 text-base text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-600"
               />
@@ -80,7 +82,7 @@ export default function Register() {
                 name="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 required
                 autoComplete="email"
                 className="block w-full rounded-md bg-gray-800 px-3 py-2 text-base text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-600"
@@ -96,7 +98,7 @@ export default function Register() {
                 name="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 required
                 className="block w-full rounded-md bg-gray-800 px-3 py-2 text-base text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-600"
               />
@@ -111,7 +113,7 @@ export default function Register() {
                 name="confirmPassword"
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={e => setConfirmPassword(e.target.value)}
                 required
                 className="block w-full rounded-md bg-gray-800 px-3 py-2 text-base text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-600"
               />
@@ -125,7 +127,7 @@ export default function Register() {
                 id="rol"
                 name="rol"
                 value={rol}
-                onChange={(e) => setRol(e.target.value)}
+                onChange={e => setRol(e.target.value)}
                 required
                 className="block w-full rounded-md bg-gray-800 px-3 py-2 text-base text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-600"
               >

@@ -1,39 +1,39 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 export default function NuevoMesero() {
-  const router = useRouter()
+  const router = useRouter();
 
   const [form, setForm] = useState({
     nombre: '',
     sexo: 'M',
     fechaNacimiento: '',
     turno: '',
-    salario: ''
-  })
+    salario: '',
+  });
 
   const handleChange = e => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async e => {
-    e.preventDefault()
+    e.preventDefault();
     try {
       const res = await fetch('http://localhost:8080/api/meseros', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
-      })
-      if (res.ok) router.push('/meseros')
-      else alert('Error al registrar mesero')
+      });
+      if (res.ok) router.push('/meseros');
+      else alert('Error al registrar mesero');
     } catch (err) {
-      console.error(err)
-      alert('Error de conexión con el servidor')
+      console.error(err);
+      alert('Error de conexión con el servidor');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen p-6 bg-[#1f2a37] text-white">
@@ -48,7 +48,12 @@ export default function NuevoMesero() {
           required
           className="w-full p-2 rounded bg-gray-700"
         />
-        <select name="sexo" value={form.sexo} onChange={handleChange} className="w-full p-2 rounded bg-gray-700">
+        <select
+          name="sexo"
+          value={form.sexo}
+          onChange={handleChange}
+          className="w-full p-2 rounded bg-gray-700"
+        >
           <option value="M">Masculino</option>
           <option value="F">Femenino</option>
         </select>
@@ -78,10 +83,14 @@ export default function NuevoMesero() {
         />
 
         <div className="flex justify-between mt-4">
-          <Button type="button" onClick={() => router.back()} className="bg-gray-600">Cancelar</Button>
-          <Button type="submit" className="bg-yellow-500 text-black">Guardar</Button>
+          <Button type="button" onClick={() => router.back()} className="bg-gray-600">
+            Cancelar
+          </Button>
+          <Button type="submit" className="bg-yellow-500 text-black">
+            Guardar
+          </Button>
         </div>
       </form>
     </div>
-  )
+  );
 }

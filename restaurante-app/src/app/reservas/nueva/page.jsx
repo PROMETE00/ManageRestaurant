@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import axios from 'axios'
-import { format } from 'date-fns'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import axios from 'axios';
+import { format } from 'date-fns';
 
 export default function NuevaReserva() {
-  const router = useRouter()
+  const router = useRouter();
 
   const [form, setForm] = useState({
     nombre: '',
@@ -16,46 +16,47 @@ export default function NuevaReserva() {
     pax: 1,
     mesa: '',
     zona: 'Comedor',
-  })
+  });
 
-  const [mesas, setMesas] = useState([])
+  const [mesas, setMesas] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/mesas')
+    axios
+      .get('http://localhost:8080/api/mesas')
       .then(res => setMesas(res.data))
-      .catch(err => console.error('Error al cargar mesas:', err))
-  }, [])
+      .catch(err => console.error('Error al cargar mesas:', err));
+  }, []);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+  const handleChange = e => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async e => {
+    e.preventDefault();
 
     try {
       const clienteRes = await axios.post('http://localhost:8080/api/clientes', {
         nombre: form.nombre,
-        telefono: '000-000-0000'
-      })
+        telefono: '000-000-0000',
+      });
 
-      const clienteId = clienteRes.data.id
+      const clienteId = clienteRes.data.id;
 
       await axios.post('http://localhost:8080/api/reservas', {
         fecha: form.fecha,
         hora: form.hora,
         cantidad: parseInt(form.pax),
         cliente: { id: clienteId },
-        mesa: { id: parseInt(form.mesa) }
-      })
+        mesa: { id: parseInt(form.mesa) },
+      });
 
-      alert('✅ Reserva creada correctamente')
-      router.push('/pagina')
+      alert('✅ Reserva creada correctamente');
+      router.push('/pagina');
     } catch (err) {
-      console.error('❌ Error al crear reserva:', err)
-      alert('Error al crear reserva')
+      console.error('❌ Error al crear reserva:', err);
+      alert('Error al crear reserva');
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#1f2a37] to-[#111827] p-4">
@@ -127,7 +128,7 @@ export default function NuevaReserva() {
               className="w-full bg-gray-800 px-4 py-2 rounded-md text-white"
             >
               <option value="">Selecciona una mesa</option>
-              {mesas.map((m) => (
+              {mesas.map(m => (
                 <option key={m.id} value={m.id}>
                   Mesa {m.id} - {m.ubicacion} ({m.capacidad} pax)
                 </option>
@@ -169,5 +170,5 @@ export default function NuevaReserva() {
         </form>
       </div>
     </div>
-  )
+  );
 }
