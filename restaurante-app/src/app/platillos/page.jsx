@@ -1,12 +1,26 @@
 'use client';
-import { useEffect, useState } from 'react';
+
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import Sidebar from '@/components/SidebarNavegacion';
 
+/* ─────────────────────────────
+   Helper: construye la URL segura
+───────────────────────────────*/
+const buildSrc = ruta => {
+  if (!ruta) return '/placeholder.jpg';            // sin imagen → placeholder
+  if (ruta.startsWith('http')) return ruta;        // URL completa (CDN, backend)
+  // quita barras iniciales extra y añade exactamente 1
+  return '/' + ruta.replace(/^\/+/, '');
+};
+
 export default function Platillos() {
   const [productos, setProductos] = useState([]);
-  const [categoriaActiva, setCategoriaActiva] = useState('All');
+  const [categoriaActiva, setCategoriaActiva] = useState(0); // 0 = All
 
+  /* ─────────────────────────────
+     Cargar productos desde la API
+  ───────────────────────────────*/
   useEffect(() => {
     axios
       .get('http://localhost:8080/api/productos')
@@ -14,10 +28,23 @@ export default function Platillos() {
       .catch(err => console.error('Error al cargar productos:', err));
   }, []);
 
-  const categorias = ['All', ...new Set(productos.map(p => p.categoria))];
+  /* ─────────────────────────────
+     Construir lista única de categorías
+  ───────────────────────────────*/
+  const categorias = useMemo(() => {
+    const mapa = new Map(); // key = id, value = { id, nombre }
+    productos.forEach(p => {
+      const c = p.categoria;
+      if (c && !mapa.has(c.id)) mapa.set(c.id, c);
+    });
+    return [{ id: 0, nombre: 'All' }, ...Array.from(mapa.values())];
+  }, [productos]);
 
+  /* ─────────────────────────────
+     Filtrar productos
+  ───────────────────────────────*/
   const productosFiltrados =
-    categoriaActiva === 'All' ? productos : productos.filter(p => p.categoria === categoriaActiva);
+    categoriaActiva === 0 ? productos : productos.filter(p => p.categoria?.id === categoriaActiva);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex relative">
@@ -26,17 +53,17 @@ export default function Platillos() {
       <div className="flex-1 ml-16 px-8 py-10">
         {/* Tabs de Categoría */}
         <div className="flex flex-wrap justify-center gap-4 mb-10">
-          {categorias.map((cat, i) => (
+          {categorias.map(cat => (
             <button
-              key={i}
-              onClick={() => setCategoriaActiva(cat)}
+              key={cat.id}
+              onClick={() => setCategoriaActiva(cat.id)}
               className={`px-5 py-2 font-semibold rounded-full ${
-                categoriaActiva === cat
+                categoriaActiva === cat.id
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-700 text-gray-300 hover:bg-green-500'
               } transition`}
             >
-              {cat}
+              {cat.nombre}
             </button>
           ))}
         </div>
@@ -44,14 +71,31 @@ export default function Platillos() {
         {/* Grid de Platillos */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {productosFiltrados.map(p => (
-            <div key={p.id} className="bg-white text-gray-900 rounded-lg overflow-hidden shadow-lg">
-              <img src={p.ruta_foto} alt={p.nombre} className="w-full h-48 object-cover" />
-              <div className="p-4">
+            <div
+              key={p.id}
+              className="bg-white text-gray-900 rounded-lg overflow-hidden shadow-lg flex flex-col"
+            >
+              {/* Imagen con proporción 4:3, no deformada */}
+              <img
+                src={buildSrc(p.rutaFoto)}
+                alt={p.nombre}
+                className="w-full aspect-[4/3] object-cover"
+                loading="lazy"
+              />
+
+              <div className="p-4 flex-1 flex flex-col">
                 <h3 className="font-bold text-lg mb-1">{p.nombre}</h3>
+
                 <p className="text-yellow-600 font-semibold mb-1">
-                  ⭐ {p.calificacion || 'N/A'} <span className="text-sm text-gray-500">(500)</span>
+                  ⭐ {p.calificacion ?? 'N/A'}{' '}
+                  <span className="text-sm text-gray-500">(500)</span>
                 </p>
-                <p className="text-sm text-gray-600 mb-2">03 piezas por porción</p>
+
+                <p className="text-sm text-gray-600 mb-2 flex-1">
+                  {/* Ajusta este texto si tu API indica piezas/porciones */}
+                  03 piezas por porción
+                </p>
+
                 <p className="text-xl font-bold text-green-700">${p.precio}</p>
               </div>
             </div>
