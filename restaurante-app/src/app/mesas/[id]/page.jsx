@@ -5,230 +5,289 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import Sidebar from '@/components/SidebarNavegacion';
 import { Button } from '@/components/ui/button';
-import { FaTrash } from 'react-icons/fa';
+import { FaTrash, FaRegEdit } from 'react-icons/fa';
 
-/* ---------- helpers ---------- */
+/* ————— helpers ————— */
 const ESTADOS = ['libre', 'reservada', 'ocupada', 'atendida'];
-const nice = t => t.charAt(0).toUpperCase() + t.slice(1);
+const colorEstado = (e) =>
+  e === 'ocupada'
+    ? 'text-red-400'
+    : e === 'reservada'
+    ? 'text-yellow-400'
+    : e === 'atendida'
+    ? 'text-blue-400'
+    : 'text-green-400';
+const nice = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : '');
 
-/* ---------- axios instance ---------- */
+/* axios instance */
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
-export default function GestionMesa() {
-  const { id } = useParams();          // mesaId (string)
+export default function MesaPage() {
+  const { id } = useParams();
   const router = useRouter();
 
-  const [mesa, setMesa]                       = useState(null);
-  const [meseros, setMeseros]                 = useState([]);
-  const [meserosAsignados, setMeserosAsignados] = useState([]);
-  const [mesaItems, setMesaItems]             = useState([]);
+  const [mesa, setMesa] = useState(null);
+  const [meseros, setMeseros] = useState([]);
+  const [productos, setProductos] = useState([]);
 
-  const [meseroId, setMeseroId]   = useState('');
-  const [nuevoEstado, setNuevoEstado] = useState('');
+  /* edición in-place */
+  const [editEstado, setEditEstado] = useState(false);
+  const [editMesero, setEditMesero] = useState(false);
+  const [estadoSel, setEstadoSel] = useState('');
+  const [meseroSel, setMeseroSel] = useState('');
 
-  /* ---------- fetch helpers ---------- */
-  const cargarMesa = () =>
-    api.get(`/mesas/${id}`)
-       .then(r => {
-         setMesa(r.data);
-         setNuevoEstado(r.data.estado?.descripcion ?? 'libre');
-       })
-       .catch(() => alert('Mesa no encontrada'));
+  /* ───────── fetch inicial ───────── */
+  const loadMesa = () =>
+    api.get(`/mesas/${id}`).then((r) => {
+      // r.data.estado viene como cadena, p.ej. "libre", "ocupada", ...
+      setMesa(r.data);
+      setEstadoSel(r.data.estado ?? 'libre');
+      // También podrías preseleccionar meseroSel si quieres:
+      // setMeseroSel(r.data.mesero?.id ?? '');
+    });
 
-  const cargarMeserosAsignados = () =>
-    api.get(`/mesas/${id}/meseros`).then(r => setMeserosAsignados(r.data));
-
-  const cargarProductosMesa = () =>
-    api.get(`/mesas/${id}/productos`).then(r => setMesaItems(r.data));
-
-  /* ---------- initial load ---------- */
   useEffect(() => {
-    cargarMesa();
-    api.get('/meseros').then(r => setMeseros(r.data));
-    cargarMeserosAsignados();
-    cargarProductosMesa();
+    loadMesa();
+    api.get('/meseros').then((r) => setMeseros(r.data));
+    api.get(`/mesas/${id}/productos`).then((r) => setProductos(r.data));
   }, [id]);
 
-  /* ---------- cambiar estado ---------- */
-  const cambiarEstado = async e => {
-    const estado = e.target.value;
-    setNuevoEstado(estado);
+  /* ───────── totals ───────── */
+  const total = useMemo(
+    () =>
+      productos.reduce((s, p) => {
+        return s + (p.precio ?? 0);
+      }, 0).toFixed(2),
+    [productos]
+  );
 
+  /* ───────── acciones ───────── */
+  const guardarEstado = async () => {
     try {
-      await api.patch(`/mesas/${id}`, { estado });
-      cargarMesa();
+      // Llamamos al back con { estado: "ocupada" } etc.
+      await api.patch(`/mesas/${id}`, { estado: estadoSel });
+
+      // Actualizamos en cliente: mesa.estado pasa a ser 'ocupada'
+      setMesa((prev) => ({
+        ...prev,
+        estado: estadoSel,
+      }));
+      setEditEstado(false);
     } catch {
       alert('Error cambiando estado');
     }
   };
 
-  /* ---------- asignar / quitar mesero ---------- */
-  const asignarMesero = async () => {
+  const guardarMesero = async () => {
+    if (!meseroSel) return;
     try {
-      await api.post(`/mesas/${id}/meseros`, { meseroId: Number(meseroId) });
-      setMeseroId('');
-      cargarMeserosAsignados();
+      await api.post(`/mesas/${id}/meseros`, { meseroId: Number(meseroSel) });
+      // Buscamos el objeto mesero en la lista que ya teníamos
+      const m = meseros.find((x) => x.id === Number(meseroSel));
+      setMesa((prev) => ({ ...prev, mesero: m }));
+      setEditMesero(false);
     } catch {
       alert('Error asignando mesero');
     }
   };
 
-  const quitarMesero = async mmId => {
+  const quitarProducto = async (pid) => {
     try {
-      await api.delete(`/mesas/${id}/meseros/${mmId}`);
-      setMeserosAsignados(prev => prev.filter(x => x.id !== mmId));
-    } catch {
-      alert('Error quitando mesero');
-    }
-  };
-
-  /* ---------- quitar producto ---------- */
-  const quitarProducto = async ticketId => {
-    try {
-      await api.delete(`/mesas/${id}/productos/${ticketId}`);
-      setMesaItems(prev => prev.filter(x => x.id !== ticketId));
+      await api.delete(`/mesas/${id}/productos/${pid}`);
+      setProductos((prev) => prev.filter((p) => p.id !== pid));
     } catch {
       alert('Error quitando producto');
     }
   };
 
-  const total = useMemo(
-    () => mesaItems.reduce((s, it) => s + (it.precio ?? 0), 0).toFixed(2),
-    [mesaItems],
-  );
+  if (!mesa)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#1f2a37]">
+        <p className="text-white text-lg">Cargando…</p>
+      </div>
+    );
 
-  if (!mesa) return <p className="text-white p-6">Cargando…</p>;
-
-  /* ---------- UI ---------- */
+  /* ————— UI ————— */
   return (
     <div className="min-h-screen bg-[#1f2a37] text-white flex">
       <Sidebar />
 
-      {/* margen lateral para la sidebar global */}
-      <div className="flex-1 ml-24 flex gap-8 p-8">
-        {/* ===== Columna izquierda ===== */}
-        <section className="w-full max-w-md bg-[#2b3748] p-8 rounded-xl shadow-xl space-y-6">
-          <h1 className="text-3xl font-bold">Mesa #{mesa.numero}</h1>
+      <div className="flex-1 ml-24 grid md:grid-cols-2 gap-8 p-8">
+        {/* ◤ Panel datos mesa ◢ */}
+        <section className="bg-[#2c3a4a] rounded-2xl shadow-2xl p-8 space-y-6 transition-shadow duration-300 hover:shadow-black/40">
+          <h1 className="text-4xl font-extrabold mb-4 text-center">
+            Mesa <span className="text-sky-300">#{mesa.numero}</span>
+          </h1>
 
-          <div className="space-y-1">
-            <p><strong>Capacidad:</strong> {mesa.capacidad} personas</p>
-            <p><strong>Ubicación:</strong> {nice(mesa.ubicacion)}</p>
-            <p>
-              <strong>Estado:</strong>{' '}
-              <span className={
-                nuevoEstado === 'ocupada'   ? 'text-red-400'     :
-                nuevoEstado === 'reservada' ? 'text-yellow-400'  :
-                nuevoEstado === 'atendida'  ? 'text-blue-400'    :
-                                              'text-green-400'
-              }>{nice(nuevoEstado)}</span>
+          {/* Datos simples */}
+          <div className="space-y-4 text-sm">
+            <p className="flex justify-between items-center">
+              <span className="font-semibold">Capacidad:</span>
+              <span className="text-base">{mesa.capacidad} personas</span>
             </p>
+            <p className="flex justify-between items-center">
+              <span className="font-semibold">Ubicación:</span>
+              <span className="text-base text-sky-300">
+                {nice(mesa.ubicacion)}
+              </span>
+            </p>
+
+            {/* Estado (editable) */}
+            <div className="flex justify-between items-center">
+              <span className="font-semibold">Estado:</span>
+              {editEstado ? (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={estadoSel}
+                    onChange={(e) => setEstadoSel(e.target.value)}
+                    className="rounded-md bg-gray-800 px-3 py-1 text-white text-sm transition-colors duration-200 focus:ring focus:ring-sky-500"
+                  >
+                    {ESTADOS.map((e) => (
+                      <option key={e} value={e}>
+                        {nice(e)}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    size="sm"
+                    onClick={guardarEstado}
+                    className="bg-yellow-400 hover:bg-yellow-300 text-black transition-transform transform hover:scale-105"
+                  >
+                    ✔
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      // Si cancelas la edición devolvemos el valor anterior
+                      setEstadoSel(mesa.estado ?? 'libre');
+                      setEditEstado(false);
+                    }}
+                    className="border-gray-500 text-gray-300 hover:bg-gray-700 transition-colors duration-200"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`${colorEstado(mesa.estado)} font-medium`}
+                  >
+                    {nice(mesa.estado)}
+                  </span>
+                  <button
+                    onClick={() => setEditEstado(true)}
+                    className="text-gray-400 hover:text-gray-200 transition-colors duration-200"
+                  >
+                    <FaRegEdit size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Mesero (editable) */}
+            <div className="flex justify-between items-center">
+              <span className="font-semibold">Mesero:</span>
+              {editMesero ? (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={meseroSel}
+                    onChange={(e) => setMeseroSel(e.target.value)}
+                    className="rounded-md bg-gray-800 px-3 py-1 text-white text-sm transition-colors duration-200 focus:ring focus:ring-sky-500"
+                  >
+                    <option value="">— Selecciona —</option>
+                    {meseros.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    size="sm"
+                    onClick={guardarMesero}
+                    disabled={!meseroSel}
+                    className={`bg-yellow-400 hover:bg-yellow-300 text-black transition-transform transform hover:scale-105 ${
+                      !meseroSel ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    ✔
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setMeseroSel('');
+                      setEditMesero(false);
+                    }}
+                    className="border-gray-500 text-gray-300 hover:bg-gray-700 transition-colors duration-200"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-base">
+                    {mesa.mesero?.nombre ?? '—'}
+                  </span>
+                  <button
+                    onClick={() => setEditMesero(true)}
+                    className="text-gray-400 hover:text-gray-200 transition-colors duration-200"
+                  >
+                    <FaRegEdit size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Cambiar estado */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Cambiar estado</label>
-            <select
-              value={nuevoEstado}
-              onChange={cambiarEstado}
-              className="w-full rounded bg-gray-800 px-3 py-2 text-white"
-            >
-              {ESTADOS.map(e => (
-                <option key={e} value={e}>{nice(e)}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Asignar mesero */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Asignar mesero</label>
-            <select
-              value={meseroId}
-              onChange={e => setMeseroId(e.target.value)}
-              className="w-full rounded bg-gray-800 px-3 py-2 text-white"
-            >
-              <option value="">Selecciona un mesero</option>
-              {meseros.map(m => (
-                <option key={m.id} value={m.id}>
-                  {m.nombre} — Turno: {m.turno}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex gap-2">
+          <div className="mt-6 space-y-2">
             <Button
-              onClick={asignarMesero}
-              disabled={!meseroId}
-              className="bg-yellow-400 text-black hover:bg-yellow-300"
-            >
-              Asignar
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => router.back()}
-              className="border-gray-400 text-gray-300 hover:bg-gray-700"
-            >
-              Cancelar
-            </Button>
-
-            <Button
+              className="w-full bg-blue-600 hover:bg-blue-500 transition-colors duration-200 transform hover:scale-[1.02] py-4 text-lg font-semibold"
               onClick={() => router.push(`/mesas/${id}/productos`)}
-              className="ml-auto bg-blue-600 hover:bg-blue-500"
             >
               Agregar productos
             </Button>
+            <Button
+              variant="outline"
+              className="w-full border-gray-500 text-gray-300 hover:bg-gray-700 transition-colors duration-200 py-3"
+              onClick={() => router.back()}
+            >
+              Volver
+            </Button>
           </div>
-
-          {/* Meseros asignados */}
-          {meserosAsignados.length > 0 && (
-            <div className="pt-2 border-t border-gray-700">
-              <h2 className="font-semibold mb-2">Meseros asignados</h2>
-              <ul className="space-y-1">
-                {meserosAsignados.map(a => (
-                  <li
-                    key={a.id}
-                    className="flex justify-between bg-gray-800 px-3 py-2 rounded items-center"
-                  >
-                    <span>{a.mesero.nombre}</span>
-                    <button
-                      onClick={() => quitarMesero(a.id)}
-                      className="text-red-400 hover:text-red-300 text-xs"
-                    >
-                      Quitar
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </section>
 
-        {/* ===== Columna derecha (ticket) ===== */}
-        <section className="flex-1 bg-[#2b3748] p-8 rounded-xl shadow-xl overflow-y-auto">
-          <h2 className="text-2xl font-bold mb-4">Ticket</h2>
+        {/* ◤ Ticket ◢ */}
+        <section className="bg-[#2c3a4a] rounded-2xl shadow-2xl p-8 flex flex-col transition-shadow duration-300 hover:shadow-black/40">
+          <h2 className="text-3xl font-bold mb-6 text-center">Ticket</h2>
 
-          {mesaItems.length === 0 ? (
-            <p className="text-gray-400">Sin productos aún</p>
+          {productos.length === 0 ? ( 
+            <p className="text-gray-400 text-center mt-8">
+              Sin productos aún
+            </p>
           ) : (
-            <ul className="space-y-2">
-              {mesaItems.map(it => (
+            <ul className="flex-1 overflow-y-auto space-y-3 pr-2">
+              {productos.map((p) => (
                 <li
-                  key={it.id}
-                  className="flex justify-between bg-gray-800 px-4 py-2 rounded items-center"
+                  key={p.id}
+                  className="flex justify-between items-center bg-gray-800 hover:bg-gray-700 transition-colors duration-200 px-5 py-3 rounded-lg"
                 >
-                  <span className="truncate max-w-[220px]">{it.nombre}</span>
+                  <span className="truncate text-base font-medium max-w-[60%]">
+                    {p.nombre}
+                  </span>
                   <div className="flex items-center gap-4">
-                    <span className="text-green-400">${it.precio}</span>
+                    <span className="text-green-400 font-semibold">
+                      ${p.precio}
+                    </span>
                     <button
-                      onClick={() => quitarProducto(it.id)}
-                      className="text-red-400 hover:text-red-300"
-                      title="Quitar"
+                      onClick={() => quitarProducto(p.id)}
+                      className="text-red-400 hover:text-red-300 transition-colors duration-200"
+                      title="Quitar producto"
                     >
-                      <FaTrash size={12} />
+                      <FaTrash size={14} />
                     </button>
                   </div>
                 </li>
@@ -237,19 +296,21 @@ export default function GestionMesa() {
           )}
 
           <div className="pt-6 border-t border-gray-700 mt-6 flex justify-between items-center">
-            <span className="font-semibold text-lg">
-              Total: <span className="text-green-400">${total}</span>
+            <span className="font-semibold text-xl">
+              Total:{' '}
+              <span className="text-green-400">${total}</span>
             </span>
             <Button
-  className="bg-purple-600 hover:bg-purple-500"
-  onClick={() => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api'}/mesas/${id}/ticket`;
-    window.open(url, '_blank');     // abre el PDF en nueva pestaña
-  }}
->
-  Imprimir ticket
-</Button>
-
+              className="bg-purple-600 hover:bg-purple-500 transition-colors duration-200 transform hover:scale-[1.02] py-2 px-6 text-base font-medium"
+              onClick={() => {
+                const url =
+                  `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api'}` +
+                  `/mesas/${id}/ticket`;
+                window.open(url, '_blank');
+              }}
+            >
+              Imprimir ticket
+            </Button>
           </div>
         </section>
       </div>
