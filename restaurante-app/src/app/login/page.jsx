@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
 import axios from 'axios';
 import Link from 'next/link';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isNavigating, setIsNavigating] = useState(false); // Estado para animación
   const router = useRouter();
 
   const handleLogin = async e => {
@@ -29,24 +29,33 @@ export default function Login() {
     }
   };
 
+  // Manejo de la navegación a Registro con fade‐out
+  const handleNavigateToRegister = (e) => {
+    e.preventDefault();
+    setIsNavigating(true); // Activar animación de transición
+    setTimeout(() => {
+      router.push('/register'); // Redirigir a la página de registro
+    }, 500); // El retraso de 500ms corresponde al fade-out
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-black relative">
       <Image
-        src="/assets/ImagenesLogin/foodBackground.webp"
+        src="/assets/ImagenesLogin/fondococina.png"
         alt="Food Background"
         fill
         className="object-cover opacity-70"
       />
 
-      {/* Contenedor principal */}
+      {/* Contenedor principal con fade-out */}
       <div
-        className="relative z-10 flex flex-row rounded-xl shadow-2xl overflow-hidden"
+        className={`relative z-10 flex flex-row rounded-xl shadow-2xl overflow-hidden ${isNavigating ? 'opacity-0 transition-opacity duration-500' : ''}`}
         style={{ height: '600px' }}
       >
         {/* Imagen lateral */}
         <div className="h-full w-[500px]">
           <Image
-            src="/assets/ImagenesLogin/comidaRapida.webp"
+            src="/assets/ImagenesLogin/meseroyadmin.png"
             alt="Food"
             width={500}
             height={600}
@@ -100,7 +109,11 @@ export default function Login() {
 
           <p className="mt-8 text-center text-gray-400">
             No tienes cuenta?{' '}
-            <Link href="/register" className="text-orange-600 font-semibold">
+            <Link
+              href="/register"
+              onClick={handleNavigateToRegister} // Añadimos el evento de clic aquí
+              className="text-orange-600 font-semibold"
+            >
               Registrarse
             </Link>
           </p>
