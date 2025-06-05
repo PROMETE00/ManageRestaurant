@@ -2,30 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Home,
-  CalendarDays,
-  Users,
-  UtensilsCrossed,
-  ShoppingCart,
-  UserCircle,
-} from 'lucide-react';
-import { motion } from 'framer-motion';
 import axios from 'axios';
+import { FaUserCircle } from 'react-icons/fa'; // Corrected import for UserCircle
 import { Button } from '@/components/ui/button';
+import SidebarNavegacionAdmin from '@/components/SideBarNavegacionAdmin';
+import SidebarNavegacionEmpleado from '@/components/SideBarNavegacionEmpleado';
 
-/* ————— items de menú lateral ————— */
-const navItems = [
-  { label: 'Dashboard', icon: <Home size={20} />,           path: '/dashboard' },
-  { label: 'Reservas',  icon: <CalendarDays size={20} />,   path: '/pagina'    },
-  { label: 'Clientes',  icon: <Users size={20} />,          path: '/clientes'  },
-  { label: 'Platillos', icon: <UtensilsCrossed size={20} />,path: '/platillos' },
-  { label: 'Pedidos',   icon: <ShoppingCart size={20} />,   path: '/pedidos'   },
-];
-
-/**
- * Devuelve la clase de fondo + hover en Tailwind según el estado de la mesa.
- */
 function clasePorEstado(estado) {
   switch (estado) {
     case 'libre':
@@ -53,8 +35,11 @@ export default function DashboardLayout() {
     const userJson = localStorage.getItem('usuario');
     if (userJson) {
       setUsuario(JSON.parse(userJson));
+    } else {
+      // Si no hay usuario logueado, redirigir a la página de login
+      router.push('/login');
     }
-  }, []);
+  }, [router]);
 
   /* ——— Cargar reservas (para hora + pax) ——— */
   useEffect(() => {
@@ -64,7 +49,7 @@ export default function DashboardLayout() {
         const data = res.data.map((r) => ({
           hora: r.hora?.slice(0, 5) + 'h',
           pax: r.cantidad,
-          mesa: r.mesa?.numero,          // Asegúrate de que tu JSON tenga “numero”
+          mesa: r.mesa?.numero, // Asegúrate de que tu JSON tenga “numero”
           zona: r.mesa?.ubicacion ?? 'Desconocida',
           nombre: r.cliente?.nombre ?? 'Sin nombre',
         }));
@@ -80,7 +65,6 @@ export default function DashboardLayout() {
       .then((res) => {
         const nuevoMapa = {};
         res.data.forEach((m) => {
-          // Cada objeto “m” debe tener “numero” y “estado”
           nuevoMapa[m.numero] = m.estado ?? 'libre';
         });
         setMesasEstado(nuevoMapa);
@@ -112,9 +96,8 @@ export default function DashboardLayout() {
     <div className="min-h-screen bg-[#1f1f2e] text-white flex flex-col">
       {/* NAVBAR SUPERIOR */}
       <nav className="w-full bg-gradient-to-r from-purple-900 to-blue-900 py-3 px-6 flex justify-between items-center shadow-md relative">
-        {/* Avatar + Nombre a la izquierda */}
-        <div className="flex items-center gap-3 absolute left-4 top-1/2 -translate-y-1/2 cursor-pointer hover:opacity-80 transition-opacity duration-300">
-          <UserCircle size={28} className="text-white" />
+        <div className="flex items-center gap-3 absolute left-4 cursor-pointer hover:opacity-80 transition-opacity duration-300">
+          <FaUserCircle size={28} className="text-white" /> {/* Corrected icon */}
           {usuario && (
             <span className="text-white text-base font-semibold">
               {usuario.nombre}
@@ -122,13 +105,11 @@ export default function DashboardLayout() {
           )}
         </div>
 
-        {/* Título centrado */}
         <h1 className="text-xl font-bold text-yellow-300 text-center mx-auto">
           🍽️ Golden Plate Bistro
         </h1>
 
-        {/* Botón “Nueva Reserva” + Reloj/Turno a la derecha */}
-        <div className="flex items-center space-x-4 absolute right-4 top-1/2 -translate-y-1/2">
+        <div className="flex items-center space-x-4">
           <Button
             onClick={() => router.push('/reservas/nueva')}
             className="bg-yellow-400 text-black font-semibold hover:bg-yellow-300"
@@ -145,26 +126,11 @@ export default function DashboardLayout() {
       <div className="flex-1 relative">
         {/* SIDEBAR LATERAL */}
         <div className="group absolute left-0 top-1/2 -translate-y-1/2 z-20">
-          <motion.aside
-            initial={{ width: 56 }}
-            whileHover={{ width: 160 }}
-            className="bg-[#151521] rounded-r-xl shadow-lg py-4 px-2 h-auto transition-all duration-300 overflow-hidden"
-          >
-            <div className="flex flex-col items-start space-y-3">
-              {navItems.map((item, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => router.push(item.path)}
-                  className="flex items-center w-full px-2 py-2 rounded-md cursor-pointer hover:bg-purple-600 transition"
-                >
-                  <div className="text-white">{item.icon}</div>
-                  <span className="ml-3 text-sm text-white font-medium hidden group-hover:inline-block transition-opacity duration-300">
-                    {item.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.aside>
+          {usuario && usuario.rol === 'admin' ? (
+            <SidebarNavegacionAdmin />
+          ) : (
+            <SidebarNavegacionEmpleado />
+          )}
         </div>
 
         {/* CONTENIDO – Plano del restaurante */}
@@ -176,10 +142,6 @@ export default function DashboardLayout() {
           </header>
 
           <div className="grid grid-cols-7 gap-3 auto-rows-[75px] justify-items-center items-center">
-            {/*
-              Solo “mesa-X” o íconos: “tree”, “bloque”, “sombrilla”.
-              Eliminamos literales “libre” de este array.
-            */}
             {[
               'tree', 'tree', 'mesa-1', 'tree', 'mesa-2', 'tree', 'tree',
               'mesa-3', 'mesa-4', 'bloque', 'mesa-5', 'mesa-6', 'mesa-7',

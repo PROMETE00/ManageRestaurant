@@ -4,15 +4,16 @@ import { useRouter } from 'next/navigation';
 import { Home, Users, UtensilsCrossed, ShoppingCart, CalendarDays } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const navItems = [
-  { label: 'Dashboard',       icon: <Home size={20} />,           path: '/dashboard' },
-  { label: 'Reservas',        icon: <CalendarDays size={20} />,    path: '/pagina' },
-  { label: 'Clientes',        icon: <Users size={20} />,          path: '/clientes' },
-  { label: 'Platillos',       icon: <UtensilsCrossed size={20} />, path: '/platillos' },
-  { label: 'Pedidos',         icon: <ShoppingCart size={20} />,    path: '/pedidos' },
+const navItemsAdmin = [
+  { label: 'Dashboard', icon: <Home size={20} />, path: '/dashboard' },
+  { label: 'Reservas', icon: <CalendarDays size={20} />, path: '/pagina' },
+  { label: 'Clientes', icon: <Users size={20} />, path: '/clientes' },
+  { label: 'Platillos', icon: <UtensilsCrossed size={20} />, path: '/platillos' },
+  { label: 'Pedidos', icon: <ShoppingCart size={20} />, path: '/pedidos' },
+  { label: 'Empleados', icon: <ShoppingCart size={20} />, path: '/meseros' },
 ];
 
-export default function SidebarNavegacion() {
+export default function SidebarAdmin() {
   const router = useRouter();
 
   return (
@@ -23,7 +24,7 @@ export default function SidebarNavegacion() {
         className="bg-[#151521] rounded-r-xl shadow-lg py-4 px-2 h-auto transition-all duration-300 overflow-hidden"
       >
         <div className="flex flex-col items-start space-y-3">
-          {navItems.map((item, index) => (
+          {navItemsAdmin.map((item, index) => (
             <div
               key={index}
               onClick={() => router.push(item.path)}

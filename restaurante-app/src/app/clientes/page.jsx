@@ -1,15 +1,33 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Pencil, Trash2, UserPlus } from 'lucide-react';
 import axios from 'axios';
-import SidebarNavegacion from '@/components/SidebarNavegacion';
-import { useRouter } from 'next/navigation'; // Usamos useRouter para la navegación
+import SidebarNavegacionAdmin from '@/components/SideBarNavegacionAdmin';
+import SidebarNavegacionEmpleado from '@/components/SideBarNavegacionEmpleado';
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
   const [search, setSearch] = useState('');
-  const router = useRouter(); // Usamos router para la navegación
+  const [usuario, setUsuario] = useState(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Verificar si hay usuario logueado
+    const userJson = localStorage.getItem('usuario');
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      setUsuario(user);
+      if (user.rol === 'empleado') {
+        // Si el usuario es un empleado, no debería acceder a esta página
+        router.push('/pagina'); // Redirigir a una página accesible solo para empleados
+      }
+    } else {
+      // Si no hay usuario logueado, redirigir a login
+      router.push('/login');
+    }
+  }, [router]);
 
   useEffect(() => {
     axios
@@ -39,8 +57,8 @@ export default function Clientes() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white relative">
-      {/* Sidebar navegable con hover */}
-      <SidebarNavegacion />
+      {/* Sidebar con validación del rol */}
+      {usuario?.rol === 'admin' ? <SidebarNavegacionAdmin /> : <SidebarNavegacionEmpleado />}
 
       <main className="ml-16 p-8">
         <h1 className="text-3xl font-bold mb-6">👥 Clientes</h1>

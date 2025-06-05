@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
@@ -15,11 +15,29 @@ export default function NuevoMesero() {
     salario: '',
   });
 
-  const handleChange = e => {
+  const [usuario, setUsuario] = useState(null);
+
+  // Verificación de si el usuario está logueado y es admin
+  useEffect(() => {
+    const userJson = localStorage.getItem('usuario');
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      if (user.rol !== 'admin') {
+        alert('❌ No tienes permiso para acceder a esta página.');
+        router.push('/login');
+      } else {
+        setUsuario(user);
+      }
+    } else {
+      router.push('/login');  // Redirige a login si no está logueado
+    }
+  }, [router]);
+
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const res = await fetch('http://localhost:8080/api/meseros', {
@@ -27,8 +45,12 @@ export default function NuevoMesero() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-      if (res.ok) router.push('/meseros');
-      else alert('Error al registrar mesero');
+      if (res.ok) {
+        alert('Mesero registrado correctamente');
+        router.push('/meseros');
+      } else {
+        alert('Error al registrar mesero');
+      }
     } catch (err) {
       console.error(err);
       alert('Error de conexión con el servidor');

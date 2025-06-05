@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
 import { format } from 'date-fns';
+import SidebarNavegacionAdmin from '@/components/SideBarNavegacionAdmin';
+import SidebarNavegacionEmpleado from '@/components/SideBarNavegacionEmpleado';
 
 export default function NuevaReserva() {
   const router = useRouter();
@@ -19,6 +21,18 @@ export default function NuevaReserva() {
   });
 
   const [mesas, setMesas] = useState([]);
+  const [usuario, setUsuario] = useState(null);
+
+  useEffect(() => {
+    // Verificar si hay usuario logueado
+    const userJson = localStorage.getItem('usuario');
+    if (userJson) {
+      setUsuario(JSON.parse(userJson));
+    } else {
+      // Redirigir a login si no hay usuario
+      router.push('/login');
+    }
+  }, [router]);
 
   useEffect(() => {
     axios
@@ -58,9 +72,16 @@ export default function NuevaReserva() {
     }
   };
 
+  if (!usuario) {
+    return <div>Cargando...</div>; // Mostrar loading hasta que se valide el usuario
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#1f2a37] to-[#111827] p-6">
       <div className="w-full max-w-2xl bg-[#2b3748] rounded-2xl shadow-2xl p-10 text-white space-y-6 transition-all duration-300 hover:shadow-xl">
+        {/* Sidebar dependiendo del rol */}
+        {usuario.rol === 'admin' ? <SidebarNavegacionAdmin /> : <SidebarNavegacionEmpleado />}
+
         <h1 className="text-3xl font-bold text-center text-yellow-500 mb-6">Crear Nueva Reserva</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">

@@ -1,15 +1,39 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { FaSortAlphaDown, FaSortAlphaUp, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
-import SidebarNavegacion from '@/components/SidebarNavegacion';
+import SidebarNavegacionAdmin from '@/components/SideBarNavegacionAdmin';
+import SidebarNavegacionEmpleado from '@/components/SideBarNavegacionEmpleado';
 
 export default function DashboardRestaurante() {
   const [reservas, setReservas] = useState([]);
   const [filtro, setFiltro] = useState('');      // texto para buscar
   const [sortField, setSortField] = useState('hora'); // 'hora' o 'nombre'
   const [sortAsc, setSortAsc] = useState(true);
+  const [usuario, setUsuario] = useState(null);
+  const router = useRouter();
+
+  // Verificar si el usuario está autenticado
+  useEffect(() => {
+    const user = localStorage.getItem('usuario');
+    if (!user) {
+      // Si no hay usuario logueado, redirigir al login
+      router.push('/login');
+      return;
+    }
+    setUsuario(JSON.parse(user));
+  }, [router]);
+
+  // Si el rol no es admin o empleado, redirige a una página restringida
+  if (usuario && usuario.rol !== 'admin' && usuario.rol !== 'empleado') {
+    return (
+      <div className="min-h-screen bg-[#1f2a37] text-white flex items-center justify-center">
+        <h1 className="text-2xl font-bold text-yellow-400">Acceso restringido. Solo administradores y empleados pueden ver esta página.</h1>
+      </div>
+    );
+  }
 
   // ──── Carga inicial de datos ────
   useEffect(() => {
@@ -81,7 +105,11 @@ export default function DashboardRestaurante() {
   return (
     <div className="flex min-h-screen bg-[#1f2a37] text-white">
       {/* ─── Sidebar ─── */}
-      <SidebarNavegacion />
+      {usuario && usuario.rol === 'admin' ? (
+        <SidebarNavegacionAdmin />
+      ) : (
+        <SidebarNavegacionEmpleado />
+      )}
 
       {/* ─── Contenido principal ─── */}
       <div className="flex-1 ml-16 p-6">

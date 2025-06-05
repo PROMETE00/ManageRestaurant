@@ -1,13 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import Sidebar from '@/components/SidebarNavegacion';
-import { Button } from '@/components/ui/button';
+import SidebarNavegacionAdmin from '@/components/SideBarNavegacionAdmin';
+import SidebarNavegacionEmpleado from '@/components/SideBarNavegacionEmpleado';
 import { FaTrash, FaRegEdit } from 'react-icons/fa';
+import { Button } from '@/components/ui/button';
 
-/* ————— helpers ————— */
+/* ───────── Helpers ───────── */
 const ESTADOS = ['libre', 'reservada', 'ocupada', 'atendida'];
 const colorEstado = (e) =>
   e === 'ocupada'
@@ -17,9 +18,10 @@ const colorEstado = (e) =>
     : e === 'atendida'
     ? 'text-blue-400'
     : 'text-green-400';
+
 const nice = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : '');
 
-/* axios instance */
+/* ───────── Axios instance ───────── */
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api',
   headers: { 'Content-Type': 'application/json' },
@@ -32,49 +34,49 @@ export default function MesaPage() {
   const [mesa, setMesa] = useState(null);
   const [meseros, setMeseros] = useState([]);
   const [productos, setProductos] = useState([]);
+  const [usuario, setUsuario] = useState(null);
 
-  /* edición in-place */
+  /* ───────── Edición in-place ───────── */
   const [editEstado, setEditEstado] = useState(false);
   const [editMesero, setEditMesero] = useState(false);
   const [estadoSel, setEstadoSel] = useState('');
   const [meseroSel, setMeseroSel] = useState('');
 
-  /* ───────── fetch inicial ───────── */
+  /* ───────── Fetch inicial ───────── */
   const loadMesa = () =>
     api.get(`/mesas/${id}`).then((r) => {
-      // r.data.estado viene como cadena, p.ej. "libre", "ocupada", ...
       setMesa(r.data);
       setEstadoSel(r.data.estado ?? 'libre');
-      // También podrías preseleccionar meseroSel si quieres:
-      // setMeseroSel(r.data.mesero?.id ?? '');
     });
 
   useEffect(() => {
     loadMesa();
     api.get('/meseros').then((r) => setMeseros(r.data));
     api.get(`/mesas/${id}/productos`).then((r) => setProductos(r.data));
-  }, [id]);
 
-  /* ───────── totals ───────── */
-  const total = useMemo(
-    () =>
-      productos.reduce((s, p) => {
-        return s + (p.precio ?? 0);
-      }, 0).toFixed(2),
-    [productos]
-  );
+    // Cargar usuario desde localStorage
+    const userJson = localStorage.getItem('usuario');
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      if (user.rol !== 'admin' && user.rol !== 'empleado') {
+        alert('❌ Acceso denegado. Solo administradores y empleados pueden acceder.');
+        router.push('/login');
+      } else {
+        setUsuario(user);
+      }
+    } else {
+      router.push('/login');
+    }
+  }, [id, router]);
 
-  /* ───────── acciones ───────── */
+  /* ───────── Totales ───────── */
+  const total = productos.reduce((s, p) => s + (p.precio ?? 0), 0).toFixed(2);
+
+  /* ───────── Acciones ───────── */
   const guardarEstado = async () => {
     try {
-      // Llamamos al back con { estado: "ocupada" } etc.
       await api.patch(`/mesas/${id}`, { estado: estadoSel });
-
-      // Actualizamos en cliente: mesa.estado pasa a ser 'ocupada'
-      setMesa((prev) => ({
-        ...prev,
-        estado: estadoSel,
-      }));
+      setMesa((prev) => ({ ...prev, estado: estadoSel }));
       setEditEstado(false);
     } catch {
       alert('Error cambiando estado');
@@ -85,9 +87,8 @@ export default function MesaPage() {
     if (!meseroSel) return;
     try {
       await api.post(`/mesas/${id}/meseros`, { meseroId: Number(meseroSel) });
-      // Buscamos el objeto mesero en la lista que ya teníamos
-      const m = meseros.find((x) => x.id === Number(meseroSel));
-      setMesa((prev) => ({ ...prev, mesero: m }));
+      const mesero = meseros.find((x) => x.id === Number(meseroSel));
+      setMesa((prev) => ({ ...prev, mesero }));
       setEditMesero(false);
     } catch {
       alert('Error asignando mesero');
@@ -110,9 +111,12 @@ export default function MesaPage() {
       </div>
     );
 
-  /* ————— UI ————— */
+  /* ───────── Sidebar dinámico según rol ───────── */
+  const Sidebar = usuario?.rol === 'admin' ? SidebarNavegacionAdmin : SidebarNavegacionEmpleado;
+
   return (
     <div className="min-h-screen bg-[#1f2a37] text-white flex">
+      {/* Sidebar dinámico */}
       <Sidebar />
 
       <div className="flex-1 ml-24 grid md:grid-cols-2 gap-8 p-8">
@@ -130,9 +134,7 @@ export default function MesaPage() {
             </p>
             <p className="flex justify-between items-center">
               <span className="font-semibold">Ubicación:</span>
-              <span className="text-base text-sky-300">
-                {nice(mesa.ubicacion)}
-              </span>
+              <span className="text-base text-sky-300">{nice(mesa.ubicacion)}</span>
             </p>
 
             {/* Estado (editable) */}
@@ -162,7 +164,6 @@ export default function MesaPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      // Si cancelas la edición devolvemos el valor anterior
                       setEstadoSel(mesa.estado ?? 'libre');
                       setEditEstado(false);
                     }}
@@ -173,9 +174,7 @@ export default function MesaPage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span
-                    className={`${colorEstado(mesa.estado)} font-medium`}
-                  >
+                  <span className={`${colorEstado(mesa.estado)} font-medium`}>
                     {nice(mesa.estado)}
                   </span>
                   <button
@@ -229,9 +228,7 @@ export default function MesaPage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="text-base">
-                    {mesa.mesero?.nombre ?? '—'}
-                  </span>
+                  <span className="text-base">{mesa.mesero?.nombre ?? '—'}</span>
                   <button
                     onClick={() => setEditMesero(true)}
                     className="text-gray-400 hover:text-gray-200 transition-colors duration-200"
@@ -264,10 +261,8 @@ export default function MesaPage() {
         <section className="bg-[#2c3a4a] rounded-2xl shadow-2xl p-8 flex flex-col transition-shadow duration-300 hover:shadow-black/40">
           <h2 className="text-3xl font-bold mb-6 text-center">Ticket</h2>
 
-          {productos.length === 0 ? ( 
-            <p className="text-gray-400 text-center mt-8">
-              Sin productos aún
-            </p>
+          {productos.length === 0 ? (
+            <p className="text-gray-400 text-center mt-8">Sin productos aún</p>
           ) : (
             <ul className="flex-1 overflow-y-auto space-y-3 pr-2">
               {productos.map((p) => (
@@ -279,9 +274,7 @@ export default function MesaPage() {
                     {p.nombre}
                   </span>
                   <div className="flex items-center gap-4">
-                    <span className="text-green-400 font-semibold">
-                      ${p.precio}
-                    </span>
+                    <span className="text-green-400 font-semibold">${p.precio}</span>
                     <button
                       onClick={() => quitarProducto(p.id)}
                       className="text-red-400 hover:text-red-300 transition-colors duration-200"

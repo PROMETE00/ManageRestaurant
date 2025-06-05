@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
-import Sidebar from '@/components/SidebarNavegacion';
+import SidebarNavegacionAdmin from '@/components/SideBarNavegacionAdmin';
+import SidebarNavegacionEmpleado from '@/components/SideBarNavegacionEmpleado';
 import { Button } from '@/components/ui/button';
 import { FaTrash } from 'react-icons/fa';
 
@@ -21,6 +22,7 @@ export default function MesaProductosPage() {
   const [productos, setProductos] = useState([]);
   const [categoriaActiva, setCategoriaActiva] = useState(0);
   const [mesaItems, setMesaItems] = useState([]); // array de MenuMesaDTO
+  const [usuario, setUsuario] = useState(null);
 
   /* --- catálogo completo --- */
   useEffect(() => {
@@ -58,7 +60,6 @@ export default function MesaProductosPage() {
         { productoId: prodId },
         { headers: { 'Content-Type': 'application/json' } },
       );
-      // data = MenuMesaDTO -> añadirlo al estado
       setMesaItems(prev => [...prev, data]);
     } catch {
       alert('No se pudo agregar');
@@ -81,12 +82,30 @@ export default function MesaProductosPage() {
     [mesaItems],
   );
 
+  /* --- protección de ruta y validación de usuario --- */
+  useEffect(() => {
+    const userJson = localStorage.getItem('usuario');
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      if (user.rol !== 'admin' && user.rol !== 'empleado') {
+        alert('❌ Acceso denegado. Solo administradores y empleados pueden acceder.');
+        router.push('/login');
+      } else {
+        setUsuario(user);
+      }
+    } else {
+      router.push('/login');
+    }
+  }, [router]);
+
+  /* --- Sidebar dinámico según rol --- */
+  const Sidebar = usuario?.rol === 'admin' ? SidebarNavegacionAdmin : SidebarNavegacionEmpleado;
+
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">
-      {/* sidebar global */}
+      {/* sidebar dinámico */}
       <Sidebar />
 
-      {/* desplazamos todo 6rem (ml-24) para no chocar con Sidebar */}
       <div className="flex-1 ml-24 flex">
         {/* panel izquierdo: productos de la mesa */}
         <aside className="w-72 bg-[#2b3748] px-4 py-6 space-y-4 overflow-y-auto">

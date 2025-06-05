@@ -2,17 +2,19 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import Sidebar from '@/components/SidebarNavegacion';
+import SidebarNavegacionAdmin from '@/components/SideBarNavegacionAdmin'; // Sidebar Admin
+import SidebarNavegacionEmpleado from '@/components/SideBarNavegacionEmpleado'; // Sidebar Empleado
+import { useRouter } from 'next/navigation';
 
 /* ───────── Helpers ───────── */
-const formatDate = iso =>
+const formatDate = (iso) =>
   new Date(iso).toLocaleDateString('es-MX', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   });
 
-const formatTime = iso =>
+const formatTime = (iso) =>
   new Date(`1970-01-01T${iso}`).toLocaleTimeString('es-MX', {
     hour: '2-digit',
     minute: '2-digit',
@@ -22,33 +24,57 @@ const formatTime = iso =>
 export default function PedidosPage() {
   const [pedidos, setPedidos] = useState([]);
   const [busqueda, setBusqueda] = useState('');
+  const [usuario, setUsuario] = useState(null);
+  const router = useRouter();
 
-  /* Fetch inicial */
+  // Validar si el usuario está logueado y si tiene el rol correcto
+  useEffect(() => {
+    const userJson = localStorage.getItem('usuario');
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      if (user.rol !== 'admin' && user.rol !== 'empleado') {
+        // Si el rol no es admin o empleado, redirigir
+        alert('❌ Acceso denegado. Solo administradores y empleados pueden acceder.');
+        router.push('/login'); // Redirige a login o página de acceso denegado
+      } else {
+        setUsuario(user);
+      }
+    } else {
+      // Si no hay usuario logueado, redirigir al login
+      router.push('/login');
+    }
+  }, [router]);
+
+  // Cargar pedidos desde la API
   useEffect(() => {
     axios
       .get('http://localhost:8080/api/pedidos')
-      .then(res => setPedidos(res.data))
-      .catch(err => console.error('Error al cargar pedidos:', err));
+      .then((res) => setPedidos(res.data))
+      .catch((err) => console.error('Error al cargar pedidos:', err));
   }, []);
 
-  /* Filtrado */
+  // Filtrar pedidos
   const pedidosFiltrados = useMemo(() => {
     if (!busqueda.trim()) return pedidos;
     const term = busqueda.toLowerCase();
     return pedidos.filter(
-      p =>
+      (p) =>
         p.id.toString().includes(term) ||
         p.cliente?.nombre?.toLowerCase().includes(term) ||
-        p.estatus.toLowerCase().includes(term),
+        p.estatus.toLowerCase().includes(term)
     );
   }, [pedidos, busqueda]);
 
+  // Usar el Sidebar adecuado según el rol del usuario
+  const Sidebar = usuario?.rol === 'admin' ? SidebarNavegacionAdmin : SidebarNavegacionEmpleado;
+
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">
+      {/* Sidebar dinámico */}
       <Sidebar />
 
-      {/* margen lateral mayor (ml-24) y padding extra (px-10) */}
-      <div className="flex-1 ml-24 px-10 py-6 overflow-x-auto">
+      {/* Contenido principal */}
+      <div className="flex-1 ml-16 px-10 py-6 overflow-x-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -60,7 +86,7 @@ export default function PedidosPage() {
             type="text"
             placeholder="Buscar..."
             value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
+            onChange={(e) => setBusqueda(e.target.value)}
             className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-sm focus:outline-none"
           />
         </div>
@@ -78,7 +104,7 @@ export default function PedidosPage() {
             </tr>
           </thead>
           <tbody>
-            {pedidosFiltrados.map(p => (
+            {pedidosFiltrados.map((p) => (
               <tr key={p.id} className="border-b border-gray-800 hover:bg-gray-800/50">
                 <td className="py-2 px-3">{p.id}</td>
                 <td className="py-2 px-3">{formatDate(p.fecha)}</td>
@@ -87,7 +113,15 @@ export default function PedidosPage() {
                 <td className="py-2 px-3 text-right">{p.total?.toFixed(2) ?? '0.00'}</td>
                 <td className="py-2 px-3 text-center">
                   {/* Aquí solo se muestra el estatus */}
-                  <span className={`font-semibold ${p.estatus === 'pagado' ? 'text-green-500' : p.estatus === 'cancelado' ? 'text-red-500' : 'text-yellow-500'}`}>
+                  <span
+                    className={`font-semibold ${
+                      p.estatus === 'pagado'
+                        ? 'text-green-500'
+                        : p.estatus === 'cancelado'
+                        ? 'text-red-500'
+                        : 'text-yellow-500'
+                    }`}
+                  >
                     {p.estatus}
                   </span>
                 </td>
