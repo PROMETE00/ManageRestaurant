@@ -15,7 +15,7 @@ export default function NuevaReserva() {
     hora: '',
     pax: 1,
     mesa: '',
-    zona: 'Comedor',
+    zona: 'Comedor', // Default zone
   });
 
   const [mesas, setMesas] = useState([]);
@@ -37,7 +37,7 @@ export default function NuevaReserva() {
     try {
       const clienteRes = await axios.post('http://localhost:8080/api/clientes', {
         nombre: form.nombre,
-        telefono: '000-000-0000',
+        telefono: '000-000-0000', // Placeholder phone number
       });
 
       const clienteId = clienteRes.data.id;
@@ -51,7 +51,7 @@ export default function NuevaReserva() {
       });
 
       alert('✅ Reserva creada correctamente');
-      router.push('/pagina');
+      router.push('/pagina'); // Redirige a la página de reservas
     } catch (err) {
       console.error('❌ Error al crear reserva:', err);
       alert('Error al crear reserva');
@@ -59,11 +59,11 @@ export default function NuevaReserva() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#1f2a37] to-[#111827] p-4">
-      <div className="w-full max-w-xl bg-[#2b3748] rounded-2xl shadow-2xl p-10 text-white space-y-6">
-        <h1 className="text-3xl font-bold text-center">Nueva Reserva</h1>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#1f2a37] to-[#111827] p-6">
+      <div className="w-full max-w-2xl bg-[#2b3748] rounded-2xl shadow-2xl p-10 text-white space-y-6 transition-all duration-300 hover:shadow-xl">
+        <h1 className="text-3xl font-bold text-center text-yellow-500 mb-6">Crear Nueva Reserva</h1>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Nombre */}
           <div>
             <label className="block text-sm font-semibold mb-1">Nombre del Cliente</label>
@@ -128,35 +128,35 @@ export default function NuevaReserva() {
               className="w-full bg-gray-800 px-4 py-2 rounded-md text-white"
             >
               <option value="">Selecciona una mesa</option>
-              {mesas.map(m => (
-                <option key={m.id} value={m.id}>
-                  Mesa {m.id} - {m.ubicacion} ({m.capacidad} pax)
+              {mesas.map(mesa => (
+                <option key={mesa.id} value={mesa.id}>
+                  {`Mesa ${mesa.numero} (${mesa.ubicacion}) - Capacidad: ${mesa.capacidad} personas`}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Zona decorativa */}
+          {/* Zona */}
           <div>
-            <label className="block text-sm font-semibold mb-1">Zona (Decorativo)</label>
+            <label className="block text-sm font-semibold mb-1">Zona</label>
             <select
               name="zona"
               value={form.zona}
               onChange={handleChange}
               className="w-full bg-gray-800 px-4 py-2 rounded-md text-white"
             >
-              <option>Comedor</option>
-              <option>Terraza</option>
-              <option>Barra</option>
+              <option value="Comedor">Comedor</option>
+              <option value="Terraza">Terraza</option>
+              <option value="Barra">Barra</option>
             </select>
           </div>
 
           {/* Botones */}
-          <div className="flex justify-between mt-6">
+          <div className="flex justify-between mt-6 space-x-4">
             <Button
               type="button"
               onClick={() => router.back()}
-              className="bg-gray-600 hover:bg-gray-700"
+              className="bg-gray-600 hover:bg-gray-700 text-white"
             >
               Cancelar
             </Button>

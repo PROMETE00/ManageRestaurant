@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { Pencil, Trash2, UserPlus } from 'lucide-react';
 import axios from 'axios';
 import SidebarNavegacion from '@/components/SidebarNavegacion';
+import { useRouter } from 'next/navigation'; // Usamos useRouter para la navegación
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
   const [search, setSearch] = useState('');
+  const router = useRouter(); // Usamos router para la navegación
 
   useEffect(() => {
     axios
@@ -21,10 +23,14 @@ export default function Clientes() {
     if (!confirm) return;
     try {
       await axios.delete(`http://localhost:8080/api/clientes/${id}`);
-      setClientes(clientes.filter(c => c.id !== id));
+      setClientes(clientes.filter(c => c.id !== id)); // Filtra y actualiza el estado
     } catch (err) {
       alert('❌ No se pudo eliminar.');
     }
+  };
+
+  const handleSearchChange = e => {
+    setSearch(e.target.value);
   };
 
   const filteredClientes = clientes.filter(c =>
@@ -40,7 +46,11 @@ export default function Clientes() {
         <h1 className="text-3xl font-bold mb-6">👥 Clientes</h1>
 
         <div className="flex justify-between mb-4">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded inline-flex items-center gap-2">
+          {/* Botón que ahora navega a la página de "Nuevo Cliente" */}
+          <button
+            onClick={() => router.push('/clientes/nuevo')}  // Redirige a la página de nuevo cliente
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded inline-flex items-center gap-2"
+          >
             <UserPlus size={18} /> Nuevo Cliente
           </button>
 
@@ -49,7 +59,7 @@ export default function Clientes() {
             placeholder="Buscar por nombre..."
             className="bg-gray-800 text-white px-4 py-2 rounded border border-gray-600 focus:outline-none"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
 
@@ -70,9 +80,7 @@ export default function Clientes() {
                   <td className="py-2 px-4">{cliente.nombre}</td>
                   <td className="py-2 px-4">{cliente.telefono}</td>
                   <td className="py-2 px-4 flex gap-2">
-                    <button className="bg-indigo-500 hover:bg-indigo-600 p-2 rounded">
-                      <Pencil size={16} />
-                    </button>
+                    {/* Botón de eliminación */}
                     <button
                       onClick={() => handleDelete(cliente.id)}
                       className="bg-red-500 hover:bg-red-600 p-2 rounded"

@@ -1,192 +1,200 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import { Button } from '@/components/ui/button';
+import { FaSortAlphaDown, FaSortAlphaUp, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
+import SidebarNavegacion from '@/components/SidebarNavegacion';
 
 export default function DashboardRestaurante() {
-  const router = useRouter();
   const [reservas, setReservas] = useState([]);
-  const [usuario, setUsuario] = useState(null);
+  const [filtro, setFiltro] = useState('');      // texto para buscar
+  const [sortField, setSortField] = useState('hora'); // 'hora' o 'nombre'
+  const [sortAsc, setSortAsc] = useState(true);
 
-  useEffect(() => {
-    const user = localStorage.getItem('usuario');
-    if (user) {
-      setUsuario(JSON.parse(user));
-    }
-  }, []);
-
+  // ──── Carga inicial de datos ────
   useEffect(() => {
     axios
       .get('http://localhost:8080/api/reservas')
       .then(res => {
         const data = res.data.map(r => ({
-          hora: r.hora?.slice(0, 5) + 'h',
+          id: r.id,
+          hora: r.hora?.slice(0, 5) + 'h',            // ej. "14:30h"
           pax: r.cantidad,
-          mesa: r.mesa?.id,
+          mesa: r.mesa?.numero ?? '—',
           zona: r.mesa?.ubicacion ?? 'Desconocida',
           nombre: r.cliente?.nombre ?? 'Sin nombre',
+          fecha: r.fecha ? new Date(r.fecha).toLocaleDateString('es-MX') : '—',
         }));
         setReservas(data);
       })
       .catch(err => console.error('Error al obtener reservas:', err));
   }, []);
 
-  const mesasActivas = reservas.map(r => r.mesa);
+  // ──── Filtrado por texto ────
+  const reservasFiltradas = useMemo(() => {
+    if (!filtro.trim()) return reservas;
+    const term = filtro.toLowerCase();
+    return reservas.filter(r =>
+      r.nombre.toLowerCase().includes(term) ||
+      r.mesa.toString().includes(term)
+    );
+  }, [reservas, filtro]);
+
+  // ──── Ordenamiento ────
+  const reservasOrdenadas = useMemo(() => {
+    return [...reservasFiltradas].sort((a, b) => {
+      let valA = a[sortField];
+      let valB = b[sortField];
+
+      // Si ordenamos por hora (convertir "HH:MMh" → número HHMM)
+      if (sortField === 'hora') {
+        const parseHora = h => {
+          if (!h) return 0;
+          const [hh, mm] = h.replace('h', '').split(':').map(x => parseInt(x, 10));
+          return hh * 100 + mm;
+        };
+        valA = parseHora(valA);
+        valB = parseHora(valB);
+      }
+
+      // Si ordenamos por nombre (cadena)
+      if (sortField === 'nombre') {
+        return sortAsc
+          ? valA.localeCompare(valB, 'es')
+          : valB.localeCompare(valA, 'es');
+      }
+
+      // Si ordenamos por mesa o pax (numérico)
+      if (sortField === 'mesa' || sortField === 'pax') {
+        valA = Number(valA) || 0;
+        valB = Number(valB) || 0;
+      }
+
+      // Comparación numérica genérica
+      return sortAsc ? valA - valB : valB - valA;
+    });
+  }, [reservasFiltradas, sortField, sortAsc]);
+
+  // ──── Cambiar dirección de orden (ascendente/descendente) ────
+  const toggleSortDirection = () => setSortAsc(prev => !prev);
 
   return (
-    <div className="flex min-h-screen bg-[#1f2a37] text-white font-sans">
-      <aside className="w-1/3 p-5 border-r border-gray-700 overflow-y-auto">
-        <header className="mb-6 relative">
-          {usuario && (
-            <p className="absolute left-0 top-0 text-2xl font-bold text-blue-300">
-              Hola, {usuario.nombre}
-            </p>
-          )}
+    <div className="flex min-h-screen bg-[#1f2a37] text-white">
+      {/* ─── Sidebar ─── */}
+      <SidebarNavegacion />
 
-          <h1 className="text-2xl font-bold text-yellow-400 tracking-wide text-center">
-            📋 RESERVAS 📋
-          </h1>
+      {/* ─── Contenido principal ─── */}
+      <div className="flex-1 ml-16 p-6">
+        <h1 className="text-3xl font-bold text-yellow-400 mb-6 text-center">
+          📋 Listado de Reservas
+        </h1>
 
+        {/* ─── Barra de filtros + botones de orden ─── */}
+        <div className="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0 md:space-x-4">
+          {/* Input de búsqueda */}
           <input
             type="text"
-            placeholder="Buscar cliente o mesa"
-            className="w-full mt-12 bg-gray-800 rounded px-3 py-2 text-sm text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            placeholder="Buscar por cliente o mesa…"
+            value={filtro}
+            onChange={e => setFiltro(e.target.value)}
+            className="w-full md:w-1/3 bg-gray-800 text-white px-4 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition"
           />
-        </header>
 
-        {/* Filtros */}
-        <div className="flex space-x-2 mb-4">
-          <Button className="bg-yellow-500 text-black">Activos</Button>
-          <Button variant="outline" className="text-yellow-400 border-yellow-400">
-            Completados
-          </Button>
-        </div>
-
-        <div className="flex space-x-2 mb-6">
-          <Button className="bg-white text-black">Hora</Button>
-          <Button className="bg-white text-black">Nombre</Button>
-        </div>
-
-        {/* Lista de reservas */}
-        <div className="space-y-4">
-          {reservas.map((reserva, i) => (
-            <div
-              key={i}
-              className="bg-gray-800 rounded-lg p-4 shadow border-l-4 border-green-500 hover:border-green-300 transition"
+          {/* Botones de orden */}
+          <div className="flex items-center space-x-2">
+            {/* Ordenar por hora */}
+            <button
+              onClick={() => {
+                if (sortField === 'hora') {
+                  toggleSortDirection();
+                } else {
+                  setSortField('hora');
+                  setSortAsc(true);
+                }
+              }}
+              className={`flex items-center gap-1 px-3 py-2 rounded-md transition 
+                ${
+                  sortField === 'hora'
+                    ? 'bg-yellow-500 text-black hover:bg-yellow-400'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                }`}
             >
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-green-300 font-semibold">{reserva.nombre}</span>
-                <span className="text-xs text-gray-400 italic">{reserva.zona}</span>
-              </div>
-              <div className="text-sm text-gray-300">
-                ⏰ {reserva.hora} — 👥 {reserva.pax}p — 🍽️ Mesa {reserva.mesa}
-              </div>
-            </div>
-          ))}
-        </div>
-      </aside>
+              Hora
+              {sortField === 'hora' &&
+                (sortAsc ? (
+                  <FaSortAmountDown size={14} />
+                ) : (
+                  <FaSortAmountUp size={14} />
+                ))}
+            </button>
 
-      {/* Panel derecho - Plano del restaurante */}
-      <main className="flex-1 p-6">
-        <header className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white">Plano del Restaurante</h2>
-          <div className="flex space-x-2">
-            <Button
-              onClick={() => router.push('/reservas/nueva')}
-              className="bg-yellow-400 text-black font-semibold hover:bg-yellow-300"
+            {/* Ordenar por nombre */}
+            <button
+              onClick={() => {
+                if (sortField === 'nombre') {
+                  toggleSortDirection();
+                } else {
+                  setSortField('nombre');
+                  setSortAsc(true);
+                }
+              }}
+              className={`flex items-center gap-1 px-3 py-2 rounded-md transition 
+                ${
+                  sortField === 'nombre'
+                    ? 'bg-yellow-500 text-black hover:bg-yellow-400'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                }`}
             >
-              ➕ Nueva Reserva
-            </Button>
-            <Button
-              onClick={() => router.push('/meseros/nuevo')}
-              className="bg-green-500 text-white hover:bg-green-400"
-            >
-              ➕ Registrar Mesero
-            </Button>
+              Cliente
+              {sortField === 'nombre' &&
+                (sortAsc ? (
+                  <FaSortAlphaDown size={14} />
+                ) : (
+                  <FaSortAlphaUp size={14} />
+                ))}
+            </button>
           </div>
-        </header>
-
-        {/* Plano visual */}
-        <div className="grid grid-cols-7 gap-3 auto-rows-[70px] justify-items-center items-center">
-          {[
-            'tree',
-            'tree',
-            'mesa-1',
-            'tree',
-            'mesa-2',
-            'tree',
-            'tree',
-            'mesa-3',
-            'libre',
-            'mesa-4',
-            'bloque',
-            'mesa-5',
-            'libre',
-            'mesa-6',
-            'mesa-7',
-            'bloque',
-            'bloque',
-            'mesa-8',
-            'bloque',
-            'bloque',
-            'mesa-9',
-            'sombrilla',
-            'tree',
-            'sombrilla',
-            'tree',
-            'sombrilla',
-            'tree',
-            'mesa-10',
-            'bloque',
-            'bloque',
-            'libre',
-            'bloque',
-            'libre',
-            'bloque',
-            'bloque',
-          ].map((item, i) => {
-            if (item.startsWith('mesa')) {
-              const numeroMesa = parseInt(item.split('-')[1]);
-              const estaActiva = mesasActivas.includes(numeroMesa);
-              const reservaMesa = reservas.find(r => r.mesa === numeroMesa);
-
-              return (
-                <div
-                  key={i}
-                  onClick={() => router.push(`/mesas/${numeroMesa}`)} // ⬅️ redirige a /mesas/#
-                  className={`cursor-pointer w-full h-full rounded flex flex-col items-center justify-center font-bold text-xs text-black text-center p-1 transition-colors duration-300 ${
-                    estaActiva ? 'bg-red-500 hover:bg-red-600' : 'bg-green-400 hover:bg-green-500'
-                  }`}
-                >
-                  <span>Mesa {numeroMesa}</span>
-                  {reservaMesa && (
-                    <>
-                      <span className="text-[10px]">{reservaMesa.hora}</span>
-                      <span className="text-[10px]">{reservaMesa.pax}p</span>
-                    </>
-                  )}
-                </div>
-              );
-            }
-
-            const iconos = {
-              tree: '/assets/icons/tree-svgrepo-com.svg',
-              bloque: '/assets/icons/chair-svgrepo-com.svg',
-              sombrilla: '/assets/icons/umbrella-sea-svgrepo-com.svg',
-            };
-
-            return (
-              <div key={i} className="w-full h-full flex justify-center items-center">
-                {iconos[item] && (
-                  <img src={iconos[item]} alt={item} className="w-8 h-8 object-contain" />
-                )}
-              </div>
-            );
-          })}
         </div>
-      </main>
+
+        {/* ─── Tabla de reservas ─── */}
+        <div className="overflow-x-auto bg-gray-800 rounded-lg shadow-lg">
+          <table className="min-w-full divide-y divide-gray-700 text-sm">
+            <thead>
+              <tr className="bg-gray-900">
+                <th className="px-4 py-3 text-left text-gray-300">Hora</th>
+                <th className="px-4 py-3 text-left text-gray-300">Cliente</th>
+                <th className="px-4 py-3 text-left text-gray-300">Mesa</th>
+                <th className="px-4 py-3 text-left text-gray-300">Zona</th>
+                <th className="px-4 py-3 text-left text-gray-300">Pax</th>
+                <th className="px-4 py-3 text-left text-gray-300">Fecha</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-700">
+              {reservasOrdenadas.map((r, idx) => (
+                <tr
+                  key={idx}
+                  className="hover:bg-gray-700 transition-colors duration-200 cursor-pointer"
+                >
+                  <td className="px-4 py-3">{r.hora}</td>
+                  <td className="px-4 py-3">{r.nombre}</td>
+                  <td className="px-4 py-3">{r.mesa}</td>
+                  <td className="px-4 py-3">{r.zona}</td>
+                  <td className="px-4 py-3">{r.pax}p</td>
+                  <td className="px-4 py-3">{r.fecha}</td>
+                </tr>
+              ))}
+
+              {reservasOrdenadas.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
+                    No hay reservas que mostrar.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,14 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Home, Users, UtensilsCrossed, ShoppingCart } from 'lucide-react';
+import { Home, Users, UtensilsCrossed, ShoppingCart, CalendarDays } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const navItems = [
-  { label: 'Dashboard', icon: <Home size={20} />, path: '/dashboard' },
-  { label: 'Clientes', icon: <Users size={20} />, path: '/clientes' },
-  { label: 'Platillos', icon: <UtensilsCrossed size={20} />, path: '/platillos' },
-  { label: 'Pedidos', icon: <ShoppingCart size={20} />, path: '/pedidos' },
+  { label: 'Dashboard',       icon: <Home size={20} />,           path: '/dashboard' },
+  { label: 'Reservas',        icon: <CalendarDays size={20} />,    path: '/pagina' },
+  { label: 'Clientes',        icon: <Users size={20} />,          path: '/clientes' },
+  { label: 'Platillos',       icon: <UtensilsCrossed size={20} />, path: '/platillos' },
+  { label: 'Pedidos',         icon: <ShoppingCart size={20} />,    path: '/pedidos' },
 ];
 
 export default function SidebarNavegacion() {
